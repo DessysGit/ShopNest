@@ -1,5 +1,15 @@
 from .user import UserCreate, UserLogin, UserResponse, TokenResponse, RefreshTokenRequest
 from .seller import SellerProfileCreate, SellerProfileUpdate, SellerProfileResponse, SellerApprovalAction
+from .category import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryWithChildren
+from .product import (
+    ProductCreate, 
+    ProductUpdate, 
+    ProductResponse, 
+    ProductListResponse, 
+    ProductSearchParams,
+    ProductImageCreate,
+    ProductImageResponse
+)
 
 __all__ = [
     "UserCreate", 
@@ -10,5 +20,16 @@ __all__ = [
     "SellerProfileCreate",
     "SellerProfileUpdate",
     "SellerProfileResponse",
-    "SellerApprovalAction"
+    "SellerApprovalAction",
+    "CategoryCreate",
+    "CategoryUpdate",
+    "CategoryResponse",
+    "CategoryWithChildren",
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductResponse",
+    "ProductListResponse",
+    "ProductSearchParams",
+    "ProductImageCreate",
+    "ProductImageResponse"
 ]
