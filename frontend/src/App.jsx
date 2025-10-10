@@ -8,11 +8,15 @@ import Register from './pages/Register';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/Dashboard';
 import SellerProducts from './pages/seller/Products';
 import CreateProduct from './pages/seller/CreateProduct';
+import SellerOrders from './pages/seller/Orders';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -38,6 +42,25 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+
+            {/* Buyer Routes */}
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <Orders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders/:id"
+              element={
+                <ProtectedRoute>
+                  <OrderDetail />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Seller Routes */}
             <Route
@@ -61,6 +84,14 @@ function App() {
               element={
                 <ProtectedRoute role="seller">
                   <CreateProduct />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller/orders"
+              element={
+                <ProtectedRoute role="seller">
+                  <SellerOrders />
                 </ProtectedRoute>
               }
             />
