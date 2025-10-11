@@ -1,16 +1,29 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, Users, Shield, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, ShoppingBag, Users, Shield, TrendingUp, LayoutDashboard, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import productService from '../services/productService';
-import toast from 'react-hot-toast';
+import useAuthStore from '../store/authStore';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuthStore();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Redirect authenticated users to their dashboards
+    if (isAuthenticated && user) {
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+        return;
+      } else if (user.role === 'seller') {
+        navigate('/seller/dashboard');
+        return;
+      }
+    }
+    
     fetchFeaturedProducts();
-  }, []);
+  }, [isAuthenticated, user, navigate]);
 
   const fetchFeaturedProducts = async () => {
     try {
@@ -25,6 +38,18 @@ const Home = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking auth and redirecting
+  if (isAuthenticated && user && (user.role === 'admin' || user.role === 'seller')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -46,12 +71,14 @@ const Home = () => {
                 Start Shopping
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center px-8 py-3 bg-primary-700 text-white rounded-lg font-semibold hover:bg-primary-800 transition-colors border-2 border-white"
-              >
-                Become a Seller
-              </Link>
+              {!isAuthenticated && (
+                <Link
+                  to="/register"
+                  className="inline-flex items-center px-8 py-3 bg-primary-700 text-white rounded-lg font-semibold hover:bg-primary-800 transition-colors border-2 border-white"
+                >
+                  Become a Seller
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -168,24 +195,26 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-primary-600 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Start Selling?
-          </h2>
-          <p className="text-xl mb-8 text-primary-100">
-            Join thousands of sellers already growing their business on ShopNest
-          </p>
-          <Link
-            to="/register"
-            className="inline-flex items-center px-8 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-          >
-            Register as Seller
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </div>
-      </section>
+      {/* CTA Section - Only show if not logged in */}
+      {!isAuthenticated && (
+        <section className="bg-primary-600 text-white py-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Ready to Start Selling?
+            </h2>
+            <p className="text-xl mb-8 text-primary-100">
+              Join thousands of sellers already growing their business on ShopNest
+            </p>
+            <Link
+              to="/register"
+              className="inline-flex items-center px-8 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              Register as Seller
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

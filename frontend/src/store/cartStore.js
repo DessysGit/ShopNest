@@ -1,7 +1,38 @@
 import { create } from 'zustand';
 
+// Helper to get user-specific cart key
+const getCartKey = (userId) => {
+  return userId ? `cart_${userId}` : 'cart_guest';
+};
+
+// Helper to get current user ID from auth
+const getCurrentUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    return user?.id || null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to load cart for current user
+const loadCart = () => {
+  const userId = getCurrentUserId();
+  const cartKey = getCartKey(userId);
+  try {
+    return JSON.parse(localStorage.getItem(cartKey) || '[]');
+  } catch {
+    return [];
+  }
+};
+
 const useCartStore = create((set, get) => ({
-  items: JSON.parse(localStorage.getItem('cart') || '[]'),
+  items: loadCart(),
+
+  // Initialize cart for logged-in user
+  initializeCart: () => {
+    set({ items: loadCart() });
+  },
 
   addItem: (product, quantity = 1) => {
     const items = get().items;
@@ -18,13 +49,17 @@ const useCartStore = create((set, get) => ({
       newItems = [...items, { ...product, quantity }];
     }
 
-    localStorage.setItem('cart', JSON.stringify(newItems));
+    const userId = getCurrentUserId();
+    const cartKey = getCartKey(userId);
+    localStorage.setItem(cartKey, JSON.stringify(newItems));
     set({ items: newItems });
   },
 
   removeItem: (productId) => {
     const newItems = get().items.filter((item) => item.id !== productId);
-    localStorage.setItem('cart', JSON.stringify(newItems));
+    const userId = getCurrentUserId();
+    const cartKey = getCartKey(userId);
+    localStorage.setItem(cartKey, JSON.stringify(newItems));
     set({ items: newItems });
   },
 
@@ -37,12 +72,21 @@ const useCartStore = create((set, get) => ({
     const newItems = get().items.map((item) =>
       item.id === productId ? { ...item, quantity } : item
     );
-    localStorage.setItem('cart', JSON.stringify(newItems));
+    const userId = getCurrentUserId();
+    const cartKey = getCartKey(userId);
+    localStorage.setItem(cartKey, JSON.stringify(newItems));
     set({ items: newItems });
   },
 
   clearCart: () => {
-    localStorage.removeItem('cart');
+    const userId = getCurrentUserId();
+    const cartKey = getCartKey(userId);
+    localStorage.removeItem(cartKey);
+    set({ items: [] });
+  },
+
+  // Clear cart on logout
+  clearOnLogout: () => {
     set({ items: [] });
   },
 
