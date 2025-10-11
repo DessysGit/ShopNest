@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowRight } from 'lucide-react';
 import useCartStore from '../store/cartStore';
+import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
 const Cart = () => {
+  const navigate = useNavigate();
   const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
 
   const handleUpdateQuantity = (productId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -21,6 +24,15 @@ const Cart = () => {
       clearCart();
       toast.success('Cart cleared');
     }
+  };
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to checkout');
+      navigate('/login');
+      return;
+    }
+    navigate('/checkout');
   };
 
   if (items.length === 0) {
@@ -65,9 +77,9 @@ const Cart = () => {
                   {/* Product Image */}
                   <Link to={`/products/${item.id}`} className="flex-shrink-0">
                     <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden">
-                      {item.primary_image ? (
+                      {item.images?.[0]?.image_url ? (
                         <img
-                          src={item.primary_image}
+                          src={item.images[0].image_url}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
@@ -159,7 +171,10 @@ const Cart = () => {
                 </div>
               </div>
 
-              <button className="w-full btn-primary mb-3 flex items-center justify-center">
+              <button 
+                onClick={handleCheckout}
+                className="w-full btn-primary mb-3 flex items-center justify-center"
+              >
                 Proceed to Checkout
                 <ArrowRight className="ml-2 h-5 w-5" />
               </button>

@@ -44,7 +44,7 @@ ShopNest is a full-stack marketplace where sellers can list their products and b
 - **Stripe** - Payment processing
 - **Pydantic** - Data validation
 
-### Frontend (Coming Soon)
+### Frontend
 - **React 18** - UI library
 - **Vite** - Build tool
 - **Tailwind CSS** - Styling
@@ -73,7 +73,7 @@ ShopNest/
 │   ├── requirements.txt     # Dependencies
 │   └── .env                 # Environment variables
 │
-├── frontend/                # React frontend (coming soon)
+├── frontend/                # React frontend 
 ├── SETUP.md                 # Setup instructions
 └── README.md               # This file
 ```
@@ -107,8 +107,6 @@ pip install -r requirements.txt
 ```
 
 3. **Configure environment:**
-```bash
-copy .env.example .env
 # Edit .env with your Supabase URL and other settings
 ```
 
@@ -159,21 +157,21 @@ Once the backend is running, interactive API documentation is available at:
 - [x] User authentication
 - [x] Basic API structure
 
-### Phase 2: Core Features (In Progress)
+### Phase 2: Core Features
 - [ ] Seller profile management
 - [ ] Product CRUD operations
 - [ ] Category management
 - [ ] Product search & filters
 - [ ] React frontend setup
 
-### Phase 3: E-Commerce (Upcoming)
+### Phase 3: E-Commerce
 - [ ] Shopping cart
 - [ ] Wishlist
 - [ ] Checkout flow
 - [ ] Stripe integration
 - [ ] Order management
 
-### Phase 4: Advanced Features (Upcoming)
+### Phase 4: Advanced Features
 - [ ] Reviews & ratings
 - [ ] Seller dashboard
 - [ ] Admin panel
@@ -213,9 +211,6 @@ The platform uses a comprehensive PostgreSQL schema with:
 - **Reviews** - User feedback
 - **And more...**
 
-See the [Blueprint](BLUEPRINT.md) for complete schema details.
-
----
 
 ## 🤝 Contributing
 

@@ -8,6 +8,7 @@ from app.schemas.seller import (
 )
 from app.models.seller import SellerProfile, ApprovalStatus
 from app.models.user import User
+from app.models.order import OrderItem, Order
 from app.middleware.auth_middleware import get_current_user, get_current_seller
 from typing import List
 
@@ -154,4 +155,112 @@ async def get_seller_dashboard(
             "rating": float(profile.rating_average),
             "total_reviews": profile.total_reviews
         }
+    }
+
+
+# === ORDER MANAGEMENT ENDPOINTS ===
+
+@router.get("/orders")
+async def get_seller_orders(
+    current_user: User = Depends(get_current_seller),
+    db: Session = Depends(get_db)
+):
+    """Get all order items for seller's products"""
+    
+    profile = current_user.seller_profile
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seller profile not found"
+        )
+    
+    # Get all order items for this seller
+    order_items = db.query(OrderItem).filter(
+        OrderItem.seller_id == profile.id
+    ).order_by(OrderItem.created_at.desc()).all()
+    
+    return order_items
+
+
+@router.put("/orders/{order_item_id}/status")
+async def update_order_status(
+    order_item_id: str,
+    status_data: dict,
+    current_user: User = Depends(get_current_seller),
+    db: Session = Depends(get_db)
+):
+    """Update order item status"""
+    
+    profile = current_user.seller_profile
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seller profile not found"
+        )
+    
+    # Get order item
+    order_item = db.query(OrderItem).filter(
+        OrderItem.id == order_item_id
+    ).first()
+    
+    if not order_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order item not found"
+        )
+    
+    # Verify ownership
+    if order_item.seller_id != profile.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
+    
+    new_status = status_data.get('status')
+    tracking_number = status_data.get('tracking_number')
+    
+    # Validate status transition
+    valid_transitions = {
+        'pending': ['confirmed', 'cancelled'],
+        'confirmed': ['processing', 'cancelled'],
+        'processing': ['shipped'],
+        'shipped': ['delivered'],
+    }
+    
+    if new_status not in valid_transitions.get(order_item.status, []):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot transition from {order_item.status} to {new_status}"
+        )
+    
+    # Update status
+    order_item.status = new_status
+    order = order_item.order
+    
+    # If shipping, tracking number is required
+    if new_status == "shipped":
+        if not tracking_number:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tracking number is required for shipped status"
+            )
+        order.tracking_number = tracking_number
+    
+    # Update main order status if all items have same status
+    all_items_status = [item.status for item in order.items]
+    if len(set(all_items_status)) == 1:
+        order.status = new_status
+    elif new_status == "cancelled":
+        # At least one item cancelled
+        if all(s == "cancelled" for s in all_items_status):
+            order.status = "cancelled"
+    
+    db.commit()
+    db.refresh(order_item)
+    
+    return {
+        "message": f"Order item status updated to {new_status}",
+        "order_item": order_item
     }

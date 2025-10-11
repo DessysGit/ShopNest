@@ -269,10 +269,13 @@ const Dashboard = () => {
               <Package className="h-5 w-5 mr-2" />
               View All Products
             </Link>
-            <button className="btn-secondary flex items-center justify-center">
+            <Link
+              to="/seller/orders"
+              className="btn-secondary flex items-center justify-center"
+            >
               <TrendingUp className="h-5 w-5 mr-2" />
               View Orders
-            </button>
+            </Link>
           </div>
         </div>
 
