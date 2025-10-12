@@ -61,7 +61,7 @@ const SellerOrders = () => {
 
   const openOrderModal = (orderItem) => {
     setSelectedOrder(orderItem);
-    setTrackingNumber(orderItem.order?.tracking_number || '');
+    setTrackingNumber(orderItem.tracking_number || '');
     setShowModal(true);
   };
 
@@ -114,9 +114,10 @@ const SellerOrders = () => {
       if (!searchTerm) return true;
       const search = searchTerm.toLowerCase();
       return (
-        item.order?.order_number?.toLowerCase().includes(search) ||
+        item.order_number?.toLowerCase().includes(search) ||
         item.product_name?.toLowerCase().includes(search) ||
-        item.order?.buyer?.email?.toLowerCase().includes(search)
+        item.buyer?.email?.toLowerCase().includes(search) ||
+        item.buyer?.full_name?.toLowerCase().includes(search)
       );
     });
 
@@ -263,7 +264,7 @@ const SellerOrders = () => {
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
-                            Order #{orderItem.order?.order_number}
+                            Order #{orderItem.order_number || 'N/A'}
                           </p>
                         </div>
                         <div className="text-right">
@@ -278,12 +279,11 @@ const SellerOrders = () => {
                         <div>
                           <p className="text-gray-600 mb-1">
                             <span className="font-medium">Customer:</span>{' '}
-                            {orderItem.order?.buyer?.first_name}{' '}
-                            {orderItem.order?.buyer?.last_name}
+                            {orderItem.buyer?.full_name || 'N/A'}
                           </p>
                           <p className="text-gray-600">
                             <span className="font-medium">Email:</span>{' '}
-                            {orderItem.order?.buyer?.email}
+                            {orderItem.buyer?.email || 'N/A'}
                           </p>
                         </div>
                         <div>
@@ -300,13 +300,13 @@ const SellerOrders = () => {
                         </div>
                       </div>
 
-                      {orderItem.order?.tracking_number && (
+                      {orderItem.tracking_number && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                           <div className="flex items-center">
                             <Truck className="h-5 w-5 text-blue-600 mr-2" />
                             <p className="text-sm text-blue-900">
                               <span className="font-semibold">Tracking:</span>{' '}
-                              {orderItem.order.tracking_number}
+                              {orderItem.tracking_number}
                             </p>
                           </div>
                         </div>
@@ -318,10 +318,10 @@ const SellerOrders = () => {
                           Shipping Address:
                         </p>
                         <p className="text-sm text-gray-600">
-                          {orderItem.order?.shipping_address?.address_line1},{' '}
-                          {orderItem.order?.shipping_address?.city},{' '}
-                          {orderItem.order?.shipping_address?.state}{' '}
-                          {orderItem.order?.shipping_address?.postal_code}
+                          {orderItem.shipping_address?.address_line1 || 'N/A'},{' '}
+                          {orderItem.shipping_address?.city || ''},{' '}
+                          {orderItem.shipping_address?.state || ''}{' '}
+                          {orderItem.shipping_address?.postal_code || ''}
                         </p>
                       </div>
                     </div>
@@ -377,7 +377,7 @@ const SellerOrders = () => {
                     Manage Order Item
                   </h2>
                   <p className="text-gray-600">
-                    Order #{selectedOrder.order?.order_number}
+                    Order #{selectedOrder.order_number || 'N/A'}
                   </p>
                 </div>
                 <button
@@ -423,18 +423,17 @@ const SellerOrders = () => {
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-gray-600">Name:</span>
                       <span className="font-medium">
-                        {selectedOrder.order?.buyer?.first_name}{' '}
-                        {selectedOrder.order?.buyer?.last_name}
+                        {selectedOrder.buyer?.full_name || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-gray-600">Email:</span>
-                      <span className="font-medium">{selectedOrder.order?.buyer?.email}</span>
+                      <span className="font-medium">{selectedOrder.buyer?.email || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b">
                       <span className="text-gray-600">Phone:</span>
                       <span className="font-medium">
-                        {selectedOrder.order?.shipping_address?.phone || 'N/A'}
+                        {selectedOrder.buyer?.phone || selectedOrder.shipping_address?.phone || 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -443,16 +442,20 @@ const SellerOrders = () => {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Shipping Address</h3>
                   <div className="p-4 bg-gray-50 rounded-lg text-sm">
-                    <p>{selectedOrder.order?.shipping_address?.address_line1}</p>
-                    {selectedOrder.order?.shipping_address?.address_line2 && (
-                      <p>{selectedOrder.order.shipping_address.address_line2}</p>
+                    <p>{selectedOrder.shipping_address?.full_name || selectedOrder.buyer?.full_name}</p>
+                    <p>{selectedOrder.shipping_address?.address_line1 || 'N/A'}</p>
+                    {selectedOrder.shipping_address?.address_line2 && (
+                      <p>{selectedOrder.shipping_address.address_line2}</p>
                     )}
                     <p>
-                      {selectedOrder.order?.shipping_address?.city},{' '}
-                      {selectedOrder.order?.shipping_address?.state}{' '}
-                      {selectedOrder.order?.shipping_address?.postal_code}
+                      {selectedOrder.shipping_address?.city || 'N/A'},{' '}
+                      {selectedOrder.shipping_address?.state || ''}{' '}
+                      {selectedOrder.shipping_address?.postal_code || ''}
                     </p>
-                    <p>{selectedOrder.order?.shipping_address?.country}</p>
+                    <p>{selectedOrder.shipping_address?.country || 'Ghana'}</p>
+                    {selectedOrder.shipping_address?.phone && (
+                      <p className="mt-2">Phone: {selectedOrder.shipping_address.phone}</p>
+                    )}
                   </div>
                 </div>
 

@@ -28,7 +28,12 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    seller_profile = relationship("SellerProfile", back_populates="user", uselist=False)
+    seller_profile = relationship(
+        "SellerProfile", 
+        back_populates="user", 
+        uselist=False,
+        foreign_keys="SellerProfile.user_id"
+    )
 
     def __repr__(self):
         return f"<User {self.email}>"

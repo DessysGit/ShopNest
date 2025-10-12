@@ -9,7 +9,11 @@ from uuid import UUID
 
 class AddressSchema(BaseModel):
     """Address schema for shipping and billing"""
-    full_name: str
+    # Support both full_name and first_name/last_name formats
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
     phone: str
     address_line1: str
     address_line2: Optional[str] = None
@@ -17,6 +21,16 @@ class AddressSchema(BaseModel):
     state: str
     postal_code: str
     country: str = "Ghana"
+    
+    @field_validator('full_name', mode='before')
+    def create_full_name(cls, v, info):
+        """Create full_name from first_name and last_name if not provided"""
+        if v:
+            return v
+        data = info.data
+        if 'first_name' in data and 'last_name' in data:
+            return f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+        return v
 
 
 class OrderItemCreate(BaseModel):

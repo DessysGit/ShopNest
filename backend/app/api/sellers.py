@@ -190,7 +190,7 @@ async def get_seller_orders(
     current_user: User = Depends(get_current_seller),
     db: Session = Depends(get_db)
 ):
-    """Get all order items for seller's products"""
+    """Get all order items for seller's products with full order details"""
     
     # Query seller profile from database to ensure it's loaded
     profile = db.query(SellerProfile).filter(
@@ -203,12 +203,135 @@ async def get_seller_orders(
             detail="Seller profile not found. Please create a seller profile first."
         )
     
-    # Get all order items for this seller
+    # Get all order items for this seller with order details
     order_items = db.query(OrderItem).filter(
         OrderItem.seller_id == profile.id
     ).order_by(OrderItem.created_at.desc()).all()
     
-    return order_items
+    # Format response with full details
+    result = []
+    for item in order_items:
+        order = item.order
+        buyer = order.buyer
+        
+        result.append({
+            "id": str(item.id),
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "product_id": str(item.product_id),
+            "product_name": item.product_name,
+            "quantity": item.quantity,
+            "price": float(item.price),
+            "subtotal": float(item.subtotal),
+            "platform_fee": float(item.platform_fee),
+            "seller_earning": float(item.seller_earning),
+            "status": item.status,
+            "created_at": item.created_at.isoformat(),
+            # Order details
+            "order_status": order.status,
+            "payment_status": order.payment_status,
+            "tracking_number": order.tracking_number,
+            # Buyer information
+            "buyer": {
+                "id": str(buyer.id),
+                "email": buyer.email,
+                "full_name": f"{buyer.first_name or ''} {buyer.last_name or ''}".strip() or "N/A",
+                "phone": buyer.phone
+            },
+            # Shipping address
+            "shipping_address": order.shipping_address,
+            "billing_address": order.billing_address,
+            "notes": order.notes
+        })
+    
+    return result
+
+
+@router.get("/orders/{order_item_id}")
+async def get_seller_order_detail(
+    order_item_id: str,
+    current_user: User = Depends(get_current_seller),
+    db: Session = Depends(get_db)
+):
+    """Get detailed information about a specific order item"""
+    
+    # Query seller profile
+    profile = db.query(SellerProfile).filter(
+        SellerProfile.user_id == current_user.id
+    ).first()
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seller profile not found. Please create a seller profile first."
+        )
+    
+    # Get order item
+    order_item = db.query(OrderItem).filter(
+        OrderItem.id == order_item_id
+    ).first()
+    
+    if not order_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order item not found"
+        )
+    
+    # Verify ownership
+    if order_item.seller_id != profile.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
+    
+    # Get full order details
+    order = order_item.order
+    buyer = order.buyer
+    
+    return {
+        "id": str(order_item.id),
+        "order_id": str(order.id),
+        "order_number": order.order_number,
+        "product_id": str(order_item.product_id),
+        "product_name": order_item.product_name,
+        "quantity": order_item.quantity,
+        "price": float(order_item.price),
+        "subtotal": float(order_item.subtotal),
+        "platform_fee": float(order_item.platform_fee),
+        "seller_earning": float(order_item.seller_earning),
+        "status": order_item.status,
+        "created_at": order_item.created_at.isoformat(),
+        "updated_at": order_item.updated_at.isoformat() if order_item.updated_at else None,
+        # Full order details
+        "order_status": order.status,
+        "payment_status": order.payment_status,
+        "payment_method": order.payment_method,
+        "tracking_number": order.tracking_number,
+        "notes": order.notes,
+        # Buyer information
+        "buyer": {
+            "id": str(buyer.id),
+            "email": buyer.email,
+            "full_name": f"{buyer.first_name or ''} {buyer.last_name or ''}".strip() or "N/A",
+            "first_name": buyer.first_name,
+            "last_name": buyer.last_name,
+            "phone": buyer.phone
+        },
+        # Shipping and billing addresses
+        "shipping_address": order.shipping_address,
+        "billing_address": order.billing_address,
+        # All items in this order (for context)
+        "all_order_items": [
+            {
+                "id": str(item.id),
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "seller_id": str(item.seller_id),
+                "status": item.status
+            }
+            for item in order.items
+        ]
+    }
 
 
 @router.put("/orders/{order_item_id}/status")
@@ -290,8 +413,29 @@ async def update_order_status(
     
     db.commit()
     db.refresh(order_item)
+    db.refresh(order)
     
+    # Return complete order information
+    buyer = order.buyer
     return {
         "message": f"Order item status updated to {new_status}",
-        "order_item": order_item
+        "order_item": {
+            "id": str(order_item.id),
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "product_name": order_item.product_name,
+            "quantity": order_item.quantity,
+            "price": float(order_item.price),
+            "subtotal": float(order_item.subtotal),
+            "status": order_item.status,
+            "order_status": order.status,
+            "payment_status": order.payment_status,
+            "tracking_number": order.tracking_number,
+            "buyer": {
+                "email": buyer.email,
+                "full_name": f"{buyer.first_name or ''} {buyer.last_name or ''}".strip() or "N/A",
+                "phone": buyer.phone
+            },
+            "shipping_address": order.shipping_address
+        }
     }
