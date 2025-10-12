@@ -36,5 +36,8 @@ class SellerProfile(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Relationships
+    user = relationship("User", back_populates="seller_profile", foreign_keys=[user_id])
+
     def __repr__(self):
         return f"<SellerProfile {self.business_name}>"

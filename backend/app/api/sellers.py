@@ -192,12 +192,15 @@ async def get_seller_orders(
 ):
     """Get all order items for seller's products"""
     
-    profile = current_user.seller_profile
+    # Query seller profile from database to ensure it's loaded
+    profile = db.query(SellerProfile).filter(
+        SellerProfile.user_id == current_user.id
+    ).first()
     
     if not profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller profile not found"
+            detail="Seller profile not found. Please create a seller profile first."
         )
     
     # Get all order items for this seller
@@ -217,12 +220,15 @@ async def update_order_status(
 ):
     """Update order item status"""
     
-    profile = current_user.seller_profile
+    # Query seller profile from database to ensure it's loaded
+    profile = db.query(SellerProfile).filter(
+        SellerProfile.user_id == current_user.id
+    ).first()
     
     if not profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller profile not found"
+            detail="Seller profile not found. Please create a seller profile first."
         )
     
     # Get order item
