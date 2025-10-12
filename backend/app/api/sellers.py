@@ -134,6 +134,9 @@ async def get_seller_dashboard(
 ):
     """Get seller dashboard stats"""
     
+    from app.models.product import Product
+    from sqlalchemy import func
+    
     profile = db.query(SellerProfile).filter(
         SellerProfile.user_id == current_user.id
     ).first()
@@ -144,14 +147,36 @@ async def get_seller_dashboard(
             detail="Seller profile not found"
         )
     
-    # TODO: Add product count, order stats when products/orders are implemented
+    # Get product count
+    total_products = db.query(Product).filter(
+        Product.seller_id == profile.id
+    ).count()
+    
+    # Get order stats
+    total_orders = db.query(OrderItem).filter(
+        OrderItem.seller_id == profile.id
+    ).count()
+    
+    pending_orders = db.query(OrderItem).filter(
+        OrderItem.seller_id == profile.id,
+        OrderItem.status == 'pending'
+    ).count()
+    
+    # Calculate total sales from order items
+    total_sales_result = db.query(func.sum(OrderItem.seller_earning)).filter(
+        OrderItem.seller_id == profile.id,
+        OrderItem.status.in_(['delivered', 'shipped', 'confirmed', 'processing'])
+    ).scalar()
+    
+    total_sales = float(total_sales_result) if total_sales_result else 0.0
+    
     return {
         "profile": SellerProfileResponse.model_validate(profile),
         "stats": {
-            "total_products": 0,  # Will be implemented later
-            "total_orders": 0,
-            "pending_orders": 0,
-            "total_sales": float(profile.total_sales),
+            "total_products": total_products,
+            "total_orders": total_orders,
+            "pending_orders": pending_orders,
+            "total_sales": total_sales,
             "rating": float(profile.rating_average),
             "total_reviews": profile.total_reviews
         }

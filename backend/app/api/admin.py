@@ -165,6 +165,9 @@ async def get_admin_dashboard(
 ):
     """Get admin dashboard statistics"""
     
+    from app.models.product import Product
+    from app.models.order import Order
+    
     total_sellers = db.query(SellerProfile).count()
     pending_sellers = db.query(SellerProfile).filter(
         SellerProfile.approval_status == ApprovalStatus.PENDING
@@ -182,6 +185,21 @@ async def get_admin_dashboard(
     from app.models.user import User
     total_users = db.query(User).count()
     
+    # Get product stats
+    total_products = db.query(Product).count()
+    active_products = db.query(Product).filter(
+        Product.is_active == True
+    ).count()
+    
+    # Get order stats
+    total_orders = db.query(Order).count()
+    pending_orders = db.query(Order).filter(
+        Order.status == 'pending'
+    ).count()
+    completed_orders = db.query(Order).filter(
+        Order.status == 'delivered'
+    ).count()
+    
     return {
         "users": {
             "total": total_users
@@ -194,12 +212,12 @@ async def get_admin_dashboard(
             "suspended": suspended_sellers
         },
         "products": {
-            "total": 0,  # Will implement later
-            "active": 0
+            "total": total_products,
+            "active": active_products
         },
         "orders": {
-            "total": 0,  # Will implement later
-            "pending": 0,
-            "completed": 0
+            "total": total_orders,
+            "pending": pending_orders,
+            "completed": completed_orders
         }
     }
