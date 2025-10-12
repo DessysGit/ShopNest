@@ -11,6 +11,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import ReviewProduct from './pages/ReviewProduct';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/Dashboard';
@@ -65,6 +66,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <OrderDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders/:orderId/review"
+              element={
+                <ProtectedRoute>
+                  <ReviewProduct />
                 </ProtectedRoute>
               }
             />
