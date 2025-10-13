@@ -158,16 +158,162 @@ async def reactivate_seller(
     }
 
 
+@router.get("/revenue/detailed")
+async def get_detailed_revenue(
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed revenue analytics for the platform
+    
+    This endpoint provides comprehensive revenue insights including:
+    - Total platform earnings (commission from all completed orders)
+    - Revenue trends by month
+    - Top earning sellers
+    - Revenue by product category
+    - Payment method breakdown
+    
+    Only accessible by admin users.
+    """
+    
+    from app.models.order import OrderItem
+    from app.models.product import Product
+    from sqlalchemy import func, extract
+    from datetime import datetime, timedelta
+    
+    # ============= OVERALL REVENUE METRICS =============
+    # Calculate total platform revenue from completed orders only
+    # We only count orders that are confirmed, processing, shipped, or delivered
+    total_platform_revenue = db.query(
+        func.sum(OrderItem.platform_fee)
+    ).filter(
+        OrderItem.status.in_(['confirmed', 'processing', 'shipped', 'delivered'])
+    ).scalar() or 0.0
+    
+    # ============= REVENUE BY MONTH (Last 12 months) =============
+    # Get revenue breakdown by month for trend analysis
+    current_date = datetime.utcnow()
+    monthly_revenue = []
+    
+    for i in range(12):
+        # Calculate the target month
+        target_date = current_date - timedelta(days=30*i)
+        month = target_date.month
+        year = target_date.year
+        
+        # Query revenue for this month
+        month_revenue = db.query(
+            func.sum(OrderItem.platform_fee)
+        ).filter(
+            extract('month', OrderItem.created_at) == month,
+            extract('year', OrderItem.created_at) == year,
+            OrderItem.status.in_(['confirmed', 'processing', 'shipped', 'delivered'])
+        ).scalar() or 0.0
+        
+        monthly_revenue.append({
+            "month": target_date.strftime("%B %Y"),
+            "revenue": round(float(month_revenue), 2)
+        })
+    
+    # Reverse to show oldest to newest
+    monthly_revenue.reverse()
+    
+    # ============= TOP EARNING SELLERS =============
+    # Find sellers who generated the most commission for the platform
+    top_sellers = db.query(
+        SellerProfile.id,
+        SellerProfile.business_name,
+        func.sum(OrderItem.platform_fee).label('total_commission'),
+        func.count(OrderItem.id).label('order_count')
+    ).join(
+        OrderItem, SellerProfile.id == OrderItem.seller_id
+    ).filter(
+        OrderItem.status.in_(['confirmed', 'processing', 'shipped', 'delivered'])
+    ).group_by(
+        SellerProfile.id,
+        SellerProfile.business_name
+    ).order_by(
+        func.sum(OrderItem.platform_fee).desc()
+    ).limit(10).all()
+    
+    top_sellers_list = [
+        {
+            "seller_id": str(seller.id),
+            "business_name": seller.business_name,
+            "commission_generated": round(float(seller.total_commission), 2),
+            "total_orders": seller.order_count
+        }
+        for seller in top_sellers
+    ]
+    
+    # ============= REVENUE BY PAYMENT METHOD =============
+    # Break down revenue by how customers paid
+    from app.models.order import Order
+    
+    payment_methods = db.query(
+        Order.payment_method,
+        func.sum(OrderItem.platform_fee).label('revenue')
+    ).join(
+        OrderItem, Order.id == OrderItem.order_id
+    ).filter(
+        OrderItem.status.in_(['confirmed', 'processing', 'shipped', 'delivered'])
+    ).group_by(
+        Order.payment_method
+    ).all()
+    
+    payment_breakdown = {
+        method or 'Unknown': round(float(revenue), 2)
+        for method, revenue in payment_methods
+    }
+    
+    # ============= TOTAL TRANSACTIONS =============
+    total_transactions = db.query(OrderItem).filter(
+        OrderItem.status.in_(['confirmed', 'processing', 'shipped', 'delivered'])
+    ).count()
+    
+    # ============= AVERAGE COMMISSION PER TRANSACTION =============
+    avg_commission = (
+        float(total_platform_revenue) / total_transactions 
+        if total_transactions > 0 
+        else 0.0
+    )
+    
+    return {
+        "summary": {
+            "total_platform_revenue": round(float(total_platform_revenue), 2),
+            "total_transactions": total_transactions,
+            "average_commission_per_transaction": round(avg_commission, 2)
+        },
+        "monthly_revenue": monthly_revenue,
+        "top_sellers": top_sellers_list,
+        "payment_method_breakdown": payment_breakdown
+    }
+
+
 @router.get("/dashboard")
 async def get_admin_dashboard(
     current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Get admin dashboard statistics"""
+    """
+    Get comprehensive admin dashboard statistics
+    
+    Returns:
+    - User statistics (total users, buyers, sellers)
+    - Seller statistics (total, pending, approved, rejected, suspended)
+    - Product statistics (total, active, inactive)
+    - Order statistics (total, by status)
+    - Revenue statistics (platform earnings, total sales, commission breakdown)
+    """
     
     from app.models.product import Product
-    from app.models.order import Order
+    from app.models.order import Order, OrderItem
+    from sqlalchemy import func
     
+    # ============= USER STATISTICS =============
+    total_users = db.query(User).count()
+    
+    # ============= SELLER STATISTICS =============
     total_sellers = db.query(SellerProfile).count()
     pending_sellers = db.query(SellerProfile).filter(
         SellerProfile.approval_status == ApprovalStatus.PENDING
@@ -182,16 +328,13 @@ async def get_admin_dashboard(
         SellerProfile.approval_status == ApprovalStatus.SUSPENDED
     ).count()
     
-    from app.models.user import User
-    total_users = db.query(User).count()
-    
-    # Get product stats
+    # ============= PRODUCT STATISTICS =============
     total_products = db.query(Product).count()
     active_products = db.query(Product).filter(
         Product.is_active == True
     ).count()
     
-    # Get order stats
+    # ============= ORDER STATISTICS =============
     total_orders = db.query(Order).count()
     pending_orders = db.query(Order).filter(
         Order.status == 'pending'
@@ -199,6 +342,48 @@ async def get_admin_dashboard(
     completed_orders = db.query(Order).filter(
         Order.status == 'delivered'
     ).count()
+    
+    # ============= REVENUE STATISTICS =============
+    # Calculate platform revenue from order items
+    # Platform earns commission (platform_fee) from each order item
+    
+    # Total platform revenue (sum of all platform fees from all orders)
+    platform_revenue_result = db.query(
+        func.sum(OrderItem.platform_fee)
+    ).filter(
+        OrderItem.status.in_(['delivered', 'shipped', 'confirmed', 'processing'])
+    ).scalar()
+    
+    platform_revenue = float(platform_revenue_result) if platform_revenue_result else 0.0
+    
+    # Total seller earnings (sum of all seller earnings from all orders)
+    seller_earnings_result = db.query(
+        func.sum(OrderItem.seller_earning)
+    ).filter(
+        OrderItem.status.in_(['delivered', 'shipped', 'confirmed', 'processing'])
+    ).scalar()
+    
+    seller_earnings = float(seller_earnings_result) if seller_earnings_result else 0.0
+    
+    # Total sales volume (platform revenue + seller earnings)
+    total_sales = platform_revenue + seller_earnings
+    
+    # Revenue breakdown by order status
+    revenue_by_status = {}
+    for order_status in ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']:
+        status_revenue = db.query(
+            func.sum(OrderItem.platform_fee)
+        ).filter(
+            OrderItem.status == order_status
+        ).scalar()
+        revenue_by_status[order_status] = float(status_revenue) if status_revenue else 0.0
+    
+    # Calculate average commission rate
+    # This shows the average percentage the platform earns
+    if total_sales > 0:
+        avg_commission_rate = (platform_revenue / total_sales) * 100
+    else:
+        avg_commission_rate = 0.0
     
     return {
         "users": {
@@ -213,11 +398,19 @@ async def get_admin_dashboard(
         },
         "products": {
             "total": total_products,
-            "active": active_products
+            "active": active_products,
+            "inactive": total_products - active_products
         },
         "orders": {
             "total": total_orders,
             "pending": pending_orders,
             "completed": completed_orders
+        },
+        "revenue": {
+            "platform_revenue": round(platform_revenue, 2),  # What the platform earned
+            "seller_earnings": round(seller_earnings, 2),     # What sellers earned
+            "total_sales": round(total_sales, 2),             # Total transaction volume
+            "avg_commission_rate": round(avg_commission_rate, 2),  # Average commission %
+            "revenue_by_status": revenue_by_status            # Revenue breakdown by order status
         }
     }
