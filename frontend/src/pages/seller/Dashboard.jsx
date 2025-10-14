@@ -5,12 +5,32 @@ import sellerService from '../../services/sellerService';
 import productService from '../../services/productService';
 import toast from 'react-hot-toast';
 
+/**
+ * Seller Dashboard Component
+ * 
+ * This component serves as the main dashboard for approved sellers.
+ * It displays:
+ * - Seller profile information and approval status
+ * - Key business metrics (products, orders, earnings, ratings)
+ * - Commission rate transparency
+ * - Recent products list
+ * - Quick action buttons for common tasks
+ * 
+ * Flow:
+ * 1. If no profile exists → Show profile creation form
+ * 2. If profile pending → Show waiting message
+ * 3. If profile rejected → Show rejection reason
+ * 4. If profile approved → Show full dashboard
+ */
 const Dashboard = () => {
-  const [profile, setProfile] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showProfileForm, setShowProfileForm] = useState(false);
+  // State management for dashboard data
+  const [profile, setProfile] = useState(null);         // Seller profile (business info, status)
+  const [stats, setStats] = useState(null);             // Dashboard statistics
+  const [products, setProducts] = useState([]);         // Recent products list
+  const [loading, setLoading] = useState(true);         // Loading state
+  const [showProfileForm, setShowProfileForm] = useState(false);  // Show/hide profile form
+  
+  // Form data for profile creation
   const [profileData, setProfileData] = useState({
     business_name: '',
     business_description: '',
@@ -18,48 +38,76 @@ const Dashboard = () => {
     tax_id: '',
   });
 
+  // Fetch dashboard data on component mount
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
+  /**
+   * Fetches all dashboard data including:
+   * - Seller profile and stats from backend
+   * - Recent products (limited to 5)
+   * 
+   * Handles 404 error by showing profile creation form
+   */
   const fetchDashboardData = async () => {
     try {
-      // Try to get seller profile
+      // Try to get seller profile and statistics
       const dashboardData = await sellerService.getDashboard();
-      setProfile(dashboardData.profile);
-      setStats(dashboardData.stats);
+      setProfile(dashboardData.profile);  // Business name, status, commission rate
+      setStats(dashboardData.stats);      // Products, orders, sales, ratings
 
-      // Get products
+      // Get seller's products (show only 5 most recent)
       const productsData = await productService.getMyProducts();
-      setProducts(productsData.slice(0, 5)); // Show only 5 recent products
+      setProducts(productsData.slice(0, 5));
     } catch (error) {
       if (error.response?.status === 404) {
-        // No profile yet
+        // No profile found - seller needs to create one
         setShowProfileForm(true);
       } else {
+        // Other errors (network, server, etc.)
         toast.error('Failed to load dashboard data');
       }
     } finally {
+      // Always stop loading, regardless of success/failure
       setLoading(false);
     }
   };
 
+  /**
+   * Handles seller profile creation form submission
+   * 
+   * Process:
+   * 1. Sends profile data to backend
+   * 2. Sets status to 'pending' (admin needs to approve)
+   * 3. Shows success message
+   * 4. Refetches dashboard data to show pending status
+   */
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
       await sellerService.createProfile(profileData);
       toast.success('Profile created! Waiting for admin approval.');
-      fetchDashboardData();
-      setShowProfileForm(false);
+      fetchDashboardData();      // Reload to show pending status
+      setShowProfileForm(false); // Hide form
     } catch (error) {
+      // Show specific error message from backend or generic message
       toast.error(error.response?.data?.detail || 'Failed to create profile');
     }
   };
 
+  /**
+   * Handles form input changes for profile data
+   * Updates state as user types
+   */
   const handleProfileChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Loading State
+   * Shows spinner while fetching dashboard data
+   */
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -71,7 +119,11 @@ const Dashboard = () => {
     );
   }
 
-  // Show profile creation form
+  /**
+   * Profile Creation Form
+   * Shown when seller doesn't have a profile yet
+   * After submission, profile status will be 'pending' for admin approval
+   */
   if (showProfileForm) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -150,7 +202,11 @@ const Dashboard = () => {
     );
   }
 
-  // Show pending approval message
+  /**
+   * Pending Approval State
+   * Shown after seller creates profile but before admin approves
+   * Seller cannot list products during this state
+   */
   if (profile?.approval_status === 'pending') {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -172,7 +228,12 @@ const Dashboard = () => {
     );
   }
 
-  // Show rejected message
+  /**
+   * Rejected State
+   * Shown when admin rejects seller's profile
+   * Displays rejection reason if provided
+   * Seller cannot list products - must contact support
+   */
   if (profile?.approval_status === 'rejected') {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -198,7 +259,15 @@ const Dashboard = () => {
     );
   }
 
-  // Main Dashboard (Approved Seller)
+  /**
+   * Main Dashboard - Approved Seller
+   * Full dashboard with all features for approved sellers
+   * Shows:
+   * - Stats cards (products, orders, earnings, rating)
+   * - Earnings overview (commission transparency)
+   * - Quick actions
+   * - Recent products list
+   */
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,32 +278,43 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
+        {/* Display key metrics: products, orders, earnings, and ratings */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Total Products Card */}
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Products</p>
                 <p className="text-3xl font-bold text-gray-900">{stats?.total_products || 0}</p>
+                <p className="text-xs text-gray-500 mt-1">Listed on marketplace</p>
               </div>
               <Package className="h-12 w-12 text-primary-600" />
             </div>
           </div>
 
+          {/* Total Orders Card - Shows badge for pending orders */}
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Orders</p>
                 <p className="text-3xl font-bold text-gray-900">{stats?.total_orders || 0}</p>
+                {stats?.pending_orders > 0 && (
+                  <p className="text-xs text-orange-600 mt-1 font-medium">
+                    {stats.pending_orders} pending action
+                  </p>
+                )}
               </div>
               <TrendingUp className="h-12 w-12 text-green-600" />
             </div>
           </div>
 
+          {/* Total Earnings Card - Shows seller's earnings after commission */}
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Sales</p>
+                <p className="text-sm text-gray-600 mb-1">Your Earnings</p>
                 <p className="text-3xl font-bold text-gray-900">${stats?.total_sales?.toFixed(2) || '0.00'}</p>
+                <p className="text-xs text-gray-500 mt-1">After platform commission</p>
               </div>
               <DollarSign className="h-12 w-12 text-blue-600" />
             </div>
@@ -251,10 +331,87 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Commission & Earnings Breakdown */}
+        {/* Shows seller's commission rate and earnings transparency */}
+        <div className="card mb-8">
+          <h2 className="text-xl font-bold mb-4">Earnings Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Commission Rate Card */}
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-purple-700 font-medium">Your Commission Rate</p>
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+              </div>
+              <p className="text-3xl font-bold text-purple-900">
+                {profile?.commission_rate || 10}%
+              </p>
+              <p className="text-xs text-purple-600 mt-1">
+                Platform keeps this from each sale
+              </p>
+            </div>
+
+            {/* Total Earnings Card */}
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-green-700 font-medium">You Keep</p>
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
+              <p className="text-3xl font-bold text-green-900">
+                {profile?.commission_rate 
+                  ? (100 - parseFloat(profile.commission_rate)).toFixed(0)
+                  : 90}%
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Of every sale you make
+              </p>
+            </div>
+
+            {/* Pending Orders Alert */}
+            <div className={`p-4 rounded-lg ${
+              stats?.pending_orders > 0 
+                ? 'bg-orange-50' 
+                : 'bg-blue-50'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className={`text-sm font-medium ${
+                  stats?.pending_orders > 0 
+                    ? 'text-orange-700' 
+                    : 'text-blue-700'
+                }`}>
+                  {stats?.pending_orders > 0 ? 'Pending Orders' : 'All Caught Up!'}
+                </p>
+                {stats?.pending_orders > 0 ? (
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                ) : (
+                  <Star className="h-5 w-5 text-blue-600" />
+                )}
+              </div>
+              <p className={`text-3xl font-bold ${
+                stats?.pending_orders > 0 
+                  ? 'text-orange-900' 
+                  : 'text-blue-900'
+              }`}>
+                {stats?.pending_orders || 0}
+              </p>
+              <p className={`text-xs mt-1 ${
+                stats?.pending_orders > 0 
+                  ? 'text-orange-600' 
+                  : 'text-blue-600'
+              }`}>
+                {stats?.pending_orders > 0 
+                  ? 'Orders need your attention' 
+                  : 'No pending actions'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Quick Actions */}
+        {/* Provides quick access to common seller tasks */}
         <div className="card mb-8">
           <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Add New Product Button */}
             <Link
               to="/seller/products/create"
               className="btn-primary flex items-center justify-center"
@@ -262,6 +419,8 @@ const Dashboard = () => {
               <Plus className="h-5 w-5 mr-2" />
               Add New Product
             </Link>
+            
+            {/* View All Products Button */}
             <Link
               to="/seller/products"
               className="btn-secondary flex items-center justify-center"
@@ -269,17 +428,26 @@ const Dashboard = () => {
               <Package className="h-5 w-5 mr-2" />
               View All Products
             </Link>
+            
+            {/* View Orders Button - Shows badge if there are pending orders */}
             <Link
               to="/seller/orders"
-              className="btn-secondary flex items-center justify-center"
+              className="btn-secondary flex items-center justify-center relative"
             >
               <TrendingUp className="h-5 w-5 mr-2" />
               View Orders
+              {/* Pending orders notification badge */}
+              {stats?.pending_orders > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-lg">
+                  {stats.pending_orders}
+                </span>
+              )}
             </Link>
           </div>
         </div>
 
         {/* Recent Products */}
+        {/* Displays up to 5 most recent products with quick stats */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Recent Products</h2>
@@ -290,8 +458,10 @@ const Dashboard = () => {
 
           {products.length > 0 ? (
             <div className="space-y-4">
+              {/* Map through recent products and display each one */}
               {products.map((product) => (
-                <div key={product.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                <div key={product.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  {/* Product Image or Placeholder */}
                   <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0">
                     {product.primary_image ? (
                       <img
@@ -300,17 +470,33 @@ const Dashboard = () => {
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
+                      /* Show package icon if no image */
                       <div className="w-full h-full flex items-center justify-center">
                         <Package className="h-6 w-6 text-gray-400" />
                       </div>
                     )}
                   </div>
+                  
+                  {/* Product Details */}
                   <div className="flex-grow">
                     <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      ${parseFloat(product.price).toFixed(2)} • Stock: {product.quantity}
-                    </p>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                      <span className="font-medium">${parseFloat(product.price).toFixed(2)}</span>
+                      <span>•</span>
+                      <span>Stock: {product.quantity}</span>
+                      {/* Show sales count if product has any sales */}
+                      {product.sales_count > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="text-green-600 font-medium">
+                            {product.sales_count} sold
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  
+                  {/* Active/Inactive Status Badge */}
                   <div className="text-right">
                     <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                       product.is_active
@@ -319,11 +505,23 @@ const Dashboard = () => {
                     }`}>
                       {product.is_active ? 'Active' : 'Inactive'}
                     </span>
+                    {/* Low stock warning */}
+                    {product.quantity < 5 && product.quantity > 0 && (
+                      <p className="text-xs text-orange-600 mt-1 font-medium">
+                        Low stock!
+                      </p>
+                    )}
+                    {product.quantity === 0 && (
+                      <p className="text-xs text-red-600 mt-1 font-medium">
+                        Out of stock
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
+            /* Empty State - No products yet */
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">No products yet</p>
