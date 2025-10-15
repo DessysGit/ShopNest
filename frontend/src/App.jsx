@@ -23,6 +23,7 @@ import SellerOrders from './pages/seller/Orders';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminSellers from './pages/admin/Sellers';
 import AdminCategories from './pages/admin/Categories';
+import AdminSettings from './pages/admin/Settings';
 
 // Components
 import Navbar from './components/Navbar';
@@ -134,6 +135,14 @@ function App() {
               element={
                 <ProtectedRoute role="admin">
                   <AdminCategories />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminSettings />
                 </ProtectedRoute>
               }
             />

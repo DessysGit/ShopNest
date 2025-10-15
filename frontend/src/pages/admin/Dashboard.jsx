@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Package, ShoppingBag, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, Package, ShoppingBag, DollarSign, TrendingUp, AlertCircle, Settings } from 'lucide-react';
 import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
@@ -205,6 +205,19 @@ const Dashboard = () => {
                     <p className="text-sm text-primary-700">Review and approve sellers</p>
                   </div>
                   <Users className="h-6 w-6 text-primary-600" />
+                </div>
+              </Link>
+
+              <Link
+                to="/admin/settings"
+                className="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-purple-900">Platform Settings</p>
+                    <p className="text-sm text-purple-700">Configure commission, thresholds, and more</p>
+                  </div>
+                  <Settings className="h-6 w-6 text-purple-600" />
                 </div>
               </Link>
 
