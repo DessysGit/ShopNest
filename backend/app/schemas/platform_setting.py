@@ -71,10 +71,10 @@ class SettingResponse(BaseModel):
     max_value: Optional[Any]
     allowed_values: Optional[List[Any]]
     
-    # Security flags
-    requires_confirmation: bool
-    is_sensitive: bool
-    is_editable: bool
+    # Security flags (with defaults for NULL values from database)
+    requires_confirmation: bool = False
+    is_sensitive: bool = False
+    is_editable: bool = True
     
     # Audit info
     updated_by: Optional[UUID]

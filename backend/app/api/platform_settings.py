@@ -268,3 +268,152 @@ async def get_audit_log(
         result.append(AuditLogResponse(**log_dict))
     
     return result
+
+
+@router.get("/{setting_key}/validate", response_model=SettingValidationResponse)
+async def validate_setting(
+    setting_key: str,
+    value: str,
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Validate a setting value before saving"""
+    setting = db.query(PlatformSetting).filter(
+        PlatformSetting.setting_key == setting_key
+    ).first()
+    
+    if not setting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{setting_key}' not found"
+        )
+    
+    # Parse value based on type
+    import json
+    try:
+        # Try to parse as JSON first
+        parsed_value = json.loads(value)
+    except:
+        # If not JSON, use as string
+        parsed_value = value
+    
+    return validate_setting_value(setting, parsed_value)
+
+
+@router.get("/{setting_key}/impact", response_model=SettingImpactAnalysis)
+async def get_impact_analysis(
+    setting_key: str,
+    value: str,
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get impact analysis for a potential setting change"""
+    setting = db.query(PlatformSetting).filter(
+        PlatformSetting.setting_key == setting_key
+    ).first()
+    
+    if not setting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{setting_key}' not found"
+        )
+    
+    # Parse value based on type
+    import json
+    try:
+        # Try to parse as JSON first
+        parsed_value = json.loads(value)
+    except:
+        # If not JSON, use as string
+        parsed_value = value
+    
+    return analyze_setting_impact(setting, parsed_value, db)
+
+
+@router.get("/{setting_key}", response_model=SettingResponse)
+async def get_setting(
+    setting_key: str,
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get a single setting by key"""
+    setting = db.query(PlatformSetting).filter(
+        PlatformSetting.setting_key == setting_key
+    ).first()
+    
+    if not setting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{setting_key}' not found"
+        )
+    
+    return SettingResponse.model_validate(setting)
+
+
+@router.put("/{setting_key}", response_model=SettingResponse)
+async def update_setting(
+    setting_key: str,
+    update: SettingValueUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update a setting value (non-critical settings)"""
+    setting = db.query(PlatformSetting).filter(
+        PlatformSetting.setting_key == setting_key
+    ).first()
+    
+    if not setting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Setting '{setting_key}' not found"
+        )
+    
+    if not setting.is_editable:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This setting cannot be modified"
+        )
+    
+    # Critical settings require password confirmation
+    if setting.requires_confirmation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This setting requires password confirmation. Use POST /admin/settings/confirm instead."
+        )
+    
+    # Validate new value
+    validation_result = validate_setting_value(setting, update.value)
+    if not validation_result.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid value: {', '.join(validation_result.errors)}"
+        )
+    
+    # Store old value
+    old_value = setting.setting_value
+    
+    # Apply change
+    setting.setting_value = update.value
+    setting.updated_by = current_user.id
+    setting.updated_at = datetime.utcnow()
+    
+    # Create audit log
+    ip_address = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    create_audit_log(
+        setting=setting,
+        old_value=old_value,
+        new_value=update.value,
+        admin_user=current_user,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        reason=update.reason,
+        db=db
+    )
+    
+    db.commit()
+    db.refresh(setting)
+    
+    return SettingResponse.model_validate(setting)
