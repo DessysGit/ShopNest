@@ -39,3 +39,20 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class PasswordResetRequest(BaseModel):
+    """Request password reset email"""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Confirm password reset with token"""
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+
+
+class PasswordChange(BaseModel):
+    """Change password when logged in"""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
