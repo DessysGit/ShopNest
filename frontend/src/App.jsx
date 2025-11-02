@@ -14,6 +14,7 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import ReviewProduct from './pages/ReviewProduct';
+import TrackOrder from './pages/TrackOrder';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/Dashboard';
@@ -48,6 +49,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/track-order" element={<TrackOrder />} />
             <Route
               path="/checkout"
               element={

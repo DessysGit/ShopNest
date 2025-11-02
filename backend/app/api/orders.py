@@ -20,6 +20,59 @@ from app.schemas.order import (
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
+@router.get("/track")
+async def track_order(
+    order_number: str,
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Public endpoint to track an order
+    
+    Requires order number and email address for verification
+    Does not require authentication
+    """
+    # Find order by order number
+    order = db.query(Order).filter(
+        Order.order_number == order_number.upper().strip()
+    ).first()
+    
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found. Please check your order number."
+        )
+    
+    # Verify email matches
+    if order.buyer.email.lower() != email.lower().strip():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email address does not match order records."
+        )
+    
+    # Return order information
+    return {
+        "order_number": order.order_number,
+        "status": order.status,
+        "payment_status": order.payment_status,
+        "tracking_number": order.tracking_number,
+        "created_at": order.created_at.isoformat(),
+        "updated_at": order.updated_at.isoformat() if order.updated_at else None,
+        "total": float(order.total),
+        "shipping_address": order.shipping_address,
+        "items": [
+            {
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "price": float(item.price),
+                "subtotal": float(item.subtotal),
+                "status": item.status
+            }
+            for item in order.items
+        ]
+    }
+
+
 @router.post("", response_model=OrderDetailResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(
     order_data: OrderCreate,

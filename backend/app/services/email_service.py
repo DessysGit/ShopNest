@@ -160,6 +160,7 @@ class EmailService:
             total=order_data['total'],
             shipping_address=order_data['shipping_address'],
             order_link=f"{self.frontend_url}/orders/{order_data['id']}",
+            frontend_url=self.frontend_url,
             company_name=self.mail_from_name,
             support_email=self.mail_from
         )

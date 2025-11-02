@@ -392,6 +392,7 @@ async def update_order_status(
     # Update status
     order_item.status = new_status
     order = order_item.order
+    buyer = order.buyer
     
     # If shipping, tracking number is required
     if new_status == "shipped":
@@ -432,7 +433,6 @@ async def update_order_status(
         print(f"Failed to send status update email: {e}")
     
     # Return complete order information
-    buyer = order.buyer
     return {
         "message": f"Order item status updated to {new_status}",
         "order_item": {
