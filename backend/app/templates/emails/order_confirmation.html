@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Order Confirmation</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; }
+        .header h1 { margin: 0; color: #fff; font-size: 28px; }
+        .content { padding: 40px 30px; }
+        .content p { line-height: 1.6; margin-bottom: 16px; color: #555; }
+        .order-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .order-box h3 { margin: 0 0 15px 0; color: #333; font-size: 18px; }
+        .order-item { padding: 12px 0; border-bottom: 1px solid #dee2e6; }
+        .order-item:last-child { border-bottom: none; }
+        .order-total { background: #e7f3ff; padding: 15px; border-radius: 6px; margin-top: 15px; font-weight: bold; }
+        .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff !important; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef; font-size: 13px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Order Confirmed!</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{ buyer_name }},</p>
+            <p>Thank you for your order! We've received your payment and are preparing your items for shipment.</p>
+            
+            <div class="order-box">
+                <h3>Order Details</h3>
+                <p style="margin: 0;"><strong>Order Number:</strong> {{ order_number }}</p>
+                <p style="margin: 5px 0 0 0;"><strong>Order Date:</strong> {{ order_date }}</p>
+            </div>
+
+            <div class="order-box">
+                <h3>Items Ordered</h3>
+                {% for item in items %}
+                <div class="order-item">
+                    <p style="margin: 0; font-weight: 600;">{{ item.product_name }}</p>
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+                        Quantity: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}
+                    </p>
+                </div>
+                {% endfor %}
+                
+                <div class="order-total">
+                    <p style="margin: 0; text-align: right;">Total: ${{ "%.2f"|format(total) }}</p>
+                </div>
+            </div>
+
+            <div class="order-box">
+                <h3>Shipping Address</h3>
+                <p style="margin: 0;">{{ shipping_address.name }}</p>
+                <p style="margin: 5px 0;">{{ shipping_address.address }}</p>
+                <p style="margin: 0;">{{ shipping_address.city }}, {{ shipping_address.state }} {{ shipping_address.zip }}</p>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{ order_link }}" class="button">View Order Details</a>
+            </div>
+
+            <p style="margin-top: 30px;">We'll send you another email once your order ships with tracking information.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {{ company_name }}. All rights reserved.</p>
+            <p><a href="mailto:{{ support_email }}" style="color: #667eea;">Contact Support</a></p>
+        </div>
+    </div>
+</body>
+</html>

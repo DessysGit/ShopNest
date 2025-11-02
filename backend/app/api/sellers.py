@@ -415,6 +415,22 @@ async def update_order_status(
     db.refresh(order_item)
     db.refresh(order)
     
+    # Send status update email to customer
+    from app.services.email_service import email_service
+    customer_name = f"{buyer.first_name or ''} {buyer.last_name or ''}".strip() or "Customer"
+    
+    try:
+        await email_service.send_order_status_update_email(
+            to_email=buyer.email,
+            customer_name=customer_name,
+            order_number=order.order_number,
+            order_id=str(order.id),
+            new_status=new_status,
+            tracking_number=tracking_number if new_status == 'shipped' else None
+        )
+    except Exception as e:
+        print(f"Failed to send status update email: {e}")
+    
     # Return complete order information
     buyer = order.buyer
     return {

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Order Status Update</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; }
+        .header h1 { margin: 0; color: #fff; font-size: 28px; }
+        .content { padding: 40px 30px; }
+        .content p { line-height: 1.6; margin-bottom: 16px; color: #555; }
+        .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff !important; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; margin: 10px 0; }
+        .status-confirmed { background: #d1fae5; color: #065f46; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-shipped { background: #fef3c7; color: #92400e; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+        .tracking-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px; margin: 20px 0; }
+        .order-details { background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .footer { background: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef; font-size: 13px; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Order Update</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{ customer_name }},</p>
+            <p>Your order status has been updated!</p>
+            
+            <div class="order-details">
+                <p><strong>Order Number:</strong> {{ order_number }}</p>
+                <p><strong>New Status:</strong> 
+                    <span class="status-badge status-{{ new_status }}">{{ new_status|upper }}</span>
+                </p>
+            </div>
+
+            {% if new_status == 'shipped' and tracking_number %}
+            <div class="tracking-box">
+                <p style="margin: 0;"><strong>📍 Tracking Number:</strong></p>
+                <p style="font-size: 18px; font-weight: bold; color: #92400e; margin: 8px 0;">{{ tracking_number }}</p>
+                <p style="margin: 0; font-size: 13px;">You can track your package using this number.</p>
+            </div>
+            {% endif %}
+
+            {% if new_status == 'confirmed' %}
+            <p>✅ Your payment has been confirmed and your order is being prepared for shipment.</p>
+            {% elif new_status == 'processing' %}
+            <p>⚙️ Your order is currently being processed by our sellers.</p>
+            {% elif new_status == 'shipped' %}
+            <p>🚚 Great news! Your order has been shipped and is on its way to you!</p>
+            {% elif new_status == 'delivered' %}
+            <p>🎉 Your order has been delivered! We hope you love your purchase!</p>
+            <p>Please take a moment to leave a review for the products you received.</p>
+            {% endif %}
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ order_link }}" class="button">View Order Details</a>
+            </div>
+
+            {% if new_status == 'delivered' %}
+            <p style="margin-top: 30px; text-align: center;">
+                <a href="{{ review_link }}" style="color: #667eea; text-decoration: none; font-weight: 600;">⭐ Leave a Review</a>
+            </p>
+            {% endif %}
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {{ company_name }}. All rights reserved.</p>
+            <p>Questions? <a href="mailto:{{ support_email }}" style="color: #667eea;">Contact Support</a></p>
+        </div>
+    </div>
+</body>
+</html>

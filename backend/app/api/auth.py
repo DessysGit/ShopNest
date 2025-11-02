@@ -43,6 +43,18 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
         
+        # Send welcome email
+        from app.services.email_service import email_service
+        user_name = f"{new_user.first_name or ''} {new_user.last_name or ''}".strip() or new_user.email.split('@')[0]
+        try:
+            await email_service.send_welcome_email(
+                to_email=new_user.email,
+                user_name=user_name
+            )
+        except Exception as e:
+            print(f"Failed to send welcome email: {e}")
+            # Don't fail registration if email fails
+        
         # Generate tokens
         access_token = create_access_token(data={"sub": str(new_user.id), "role": new_user.role})
         refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
@@ -146,19 +158,20 @@ async def forgot_password(request_data: PasswordResetRequest, db: Session = Depe
     """
     Request password reset email
     
-    Generates a reset token and stores it in database.
-    In production, this would send an email with the reset link.
-    For now, returns the token in response (for testing).
+    Generates a reset token and sends it via email.
     """
+    from app.services.email_service import email_service
     
     # Find user by email
     user = db.query(User).filter(User.email == request_data.email).first()
     
     # Don't reveal if email exists or not (security best practice)
+    # Always return success message
+    response_message = "If your email is registered, you will receive a password reset link shortly."
+    
     if not user:
-        return {
-            "message": "If your email is registered, you will receive a password reset link."
-        }
+        # Still return success to prevent email enumeration
+        return {"message": response_message}
     
     # Generate reset token
     import secrets
@@ -183,16 +196,19 @@ async def forgot_password(request_data: PasswordResetRequest, db: Session = Depe
     db.add(reset_token_record)
     db.commit()
     
-    # TODO: Send email with reset link
-    # send_password_reset_email(user.email, reset_token)
+    # Send email with reset link
+    user_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or None
+    try:
+        await email_service.send_password_reset_email(
+            to_email=user.email,
+            reset_token=reset_token,
+            user_name=user_name
+        )
+    except Exception as e:
+        print(f"Failed to send reset email: {e}")
+        # Don't fail the request if email fails
     
-    # For testing/demo, return the token
-    # In production, remove this and only send via email
-    return {
-        "message": "If your email is registered, you will receive a password reset link.",
-        "token": reset_token,  # REMOVE IN PRODUCTION!
-        "expires_at": expires_at.isoformat()
-    }
+    return {"message": response_message}
 
 
 @router.post("/reset-password")

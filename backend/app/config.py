@@ -28,11 +28,16 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
     
-    # Email (optional)
-    SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
+    # Email (Mailtrap for testing)
+    SMTP_HOST: str = "sandbox.smtp.mailtrap.io"
+    SMTP_PORT: int = 2525
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
+    MAIL_FROM: str = "noreply@shopnest.com"
+    MAIL_FROM_NAME: str = "ShopNest"
+    
+    # Frontend URL (for email links)
+    FRONTEND_URL: str = "http://localhost:5173"
     
     class Config:
         env_file = ".env"
