@@ -179,14 +179,20 @@ class EmailService:
         # Calculate total earnings for this seller
         total_earnings = sum(item['seller_earning'] for item in order_data['items'])
         
+        # Extract shipping address details
+        shipping_addr = order_data.get('shipping_address', {})
+        
         html_content = template.render(
             seller_name=seller_name,
             order_number=order_data['order_number'],
             order_date=order_data.get('order_date', ''),
-            customer_name=order_data.get('customer_name', 'Customer'),
+            buyer_name=order_data.get('customer_name', 'Customer'),  # Changed to buyer_name
+            buyer_email=order_data.get('customer_email', ''),  # Added buyer_email
             items=order_data['items'],
             total_earnings=total_earnings,
             shipping_address=order_data['shipping_address'],
+            shipping_city=shipping_addr.get('city', ''),  # Added city
+            shipping_state=shipping_addr.get('state', ''),  # Added state
             seller_dashboard=f"{self.frontend_url}/seller/orders",
             company_name=self.mail_from_name
         )
@@ -210,10 +216,20 @@ class EmailService:
         
         template = template_env.get_template('order_status_update.html')
         
+        # Status display text
+        status_text_map = {
+            'confirmed': 'Confirmed',
+            'processing': 'Processing',
+            'shipped': 'Shipped',
+            'delivered': 'Delivered',
+            'cancelled': 'Cancelled'
+        }
+        
         html_content = template.render(
-            customer_name=customer_name,
+            buyer_name=customer_name,  # Changed from customer_name to buyer_name for consistency
             order_number=order_number,
-            new_status=new_status,
+            status=new_status,  # lowercase status for conditionals
+            status_text=status_text_map.get(new_status, new_status.title()),  # Added status_text
             tracking_number=tracking_number,
             order_link=f"{self.frontend_url}/orders/{order_id}",
             review_link=f"{self.frontend_url}/orders/{order_id}/review" if new_status == 'delivered' else None,

@@ -234,6 +234,7 @@ async def confirm_payment(
                 'payment_method': order.payment_method or 'Card',
                 'buyer_name': buyer_name,
                 'customer_name': buyer_name,
+                'customer_email': order.buyer.email,  # Added for seller email
                 'subtotal': float(order.subtotal),
                 'shipping': float(order.shipping_cost),
                 'tax': float(order.tax),
