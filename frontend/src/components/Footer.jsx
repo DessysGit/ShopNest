@@ -5,10 +5,10 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 justify-center md:justify-start">
               <Store className="h-8 w-8 text-primary-500" />
               <span className="text-2xl font-bold text-white">ShopNest</span>
             </div>
@@ -70,15 +70,15 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-2">
-              <li className="flex items-center space-x-2">
+              <li className="flex items-center space-x-2 justify-center md:justify-start">
                 <Mail className="h-4 w-4" />
                 <span className="text-sm">support@shopnest.com</span>
               </li>
-              <li className="flex items-center space-x-2">
+              <li className="flex items-center space-x-2 justify-center md:justify-start">
                 <Phone className="h-4 w-4" />
                 <span className="text-sm">+233 55 215 3091</span>
               </li>
-              <li className="flex items-center space-x-2">
+              <li className="flex items-center space-x-2 justify-center md:justify-start">
                 <MapPin className="h-4 w-4" />
                 <span className="text-sm">Accra, Ghana</span>
               </li>
