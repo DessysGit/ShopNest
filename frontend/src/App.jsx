@@ -32,11 +32,13 @@ import AdminSettings from './pages/admin/Settings';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import DemoBanner from './components/DemoBanner';
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
+        <DemoBanner />
         <Navbar />
         <main className="flex-grow">
           <Routes>

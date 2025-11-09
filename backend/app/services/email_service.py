@@ -15,6 +15,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from app.config import settings
 import logging
+import httpx
+import os
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -31,11 +33,21 @@ class EmailService:
     """Service for sending emails"""
     
     def __init__(self):
-        self.smtp_host = settings.SMTP_HOST
-        self.smtp_port = settings.SMTP_PORT
-        self.smtp_user = settings.SMTP_USER
-        self.smtp_password = settings.SMTP_PASSWORD
-        self.mail_from = settings.MAIL_FROM
+        # Email provider selection (smtp or resend)
+        self.email_provider = os.getenv("EMAIL_PROVIDER", "smtp").lower()
+        
+        # Resend configuration
+        if self.email_provider == "resend":
+            self.resend_api_key = os.getenv("RESEND_API_KEY")
+            self.mail_from = os.getenv("MAIL_FROM", "ShopNest <onboarding@resend.dev>")
+        else:
+            # SMTP configuration (for development)
+            self.smtp_host = settings.SMTP_HOST
+            self.smtp_port = settings.SMTP_PORT
+            self.smtp_user = settings.SMTP_USER
+            self.smtp_password = settings.SMTP_PASSWORD
+            self.mail_from = settings.MAIL_FROM
+        
         self.mail_from_name = settings.MAIL_FROM_NAME
         self.frontend_url = settings.FRONTEND_URL
     
@@ -47,13 +59,78 @@ class EmailService:
         text_content: str = None
     ):
         """
-        Send an email
+        Send an email using configured provider
         
         Args:
             to_email: Recipient email address
             subject: Email subject
             html_content: HTML content of email
-            text_content: Plain text content (optional, falls back to html)
+            text_content: Plain text content (optional)
+        """
+        
+        if self.email_provider == "resend":
+            return await self._send_via_resend(to_email, subject, html_content, text_content)
+        else:
+            return await self._send_via_smtp(to_email, subject, html_content, text_content)
+    
+    async def _send_via_resend(
+        self,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: str = None
+    ):
+        """
+        Send email via Resend API
+        """
+        
+        if not self.resend_api_key:
+            logger.warning(f"Resend API key not configured. Would send email to {to_email}: {subject}")
+            logger.info(f"Email preview: {html_content[:200]}...")
+            return False
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                payload = {
+                    "from": self.mail_from,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html_content
+                }
+                
+                if text_content:
+                    payload["text"] = text_content
+                
+                response = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {self.resend_api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json=payload,
+                    timeout=10.0
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"Email sent successfully via Resend to {to_email}")
+                    return True
+                else:
+                    logger.error(f"Resend API error: {response.status_code} - {response.text}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Failed to send email via Resend to {to_email}: {str(e)}")
+            return False
+    
+    async def _send_via_smtp(
+        self,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: str = None
+    ):
+        """
+        Send email via SMTP (for development/Mailtrap)
         """
         
         # Skip if SMTP not configured
@@ -88,11 +165,11 @@ class EmailService:
                 start_tls=True
             )
             
-            logger.info(f"Email sent successfully to {to_email}")
+            logger.info(f"Email sent successfully via SMTP to {to_email}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}")
             return False
     
     async def send_password_reset_email(self, to_email: str, reset_token: str, user_name: str = None):
