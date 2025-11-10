@@ -42,4 +42,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """
+    Health check endpoint for monitoring and keep-alive pings.
+    Used by UptimeRobot and frontend to prevent Render free tier from sleeping.
+    """
+    from datetime import datetime
+    return {
+        "status": "healthy",
+        "service": "ShopNest API",
+        "timestamp": datetime.utcnow().isoformat(),
+        "environment": settings.ENVIRONMENT
+    }
