@@ -1,6 +1,6 @@
 # 🛍️ ShopNest
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://shopnest-frontend-pi.vercel.app)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://shopnest-mart.vercel.app)
 [![Backend](https://img.shields.io/badge/backend-online-success)](https://shopnest-backend-0oqh.onrender.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production-green.svg)]()
@@ -9,7 +9,7 @@
 
 ShopNest is a production-ready, full-stack e-commerce platform where multiple sellers can list their products and buyers can shop from various vendors in one place. Built with modern technologies, comprehensive commission tracking, robust seller approval system, and **complete email notification system**.
 
-🌐 **[View Live Demo →](https://shopnest-frontend-pi.vercel.app)**
+🌐 **[View Live Demo →](https://shopnest-mart.vercel.app)**
 
 ---
 
@@ -17,7 +17,7 @@ ShopNest is a production-ready, full-stack e-commerce platform where multiple se
 
 ### Production URLs
 
-**Frontend:** [https://shopnest-frontend-pi.vercel.app](https://shopnest-frontend-pi.vercel.app)  
+**Frontend:** [https://shopnest-mart.vercel.app](https://shopnest-mart.vercel.app)  
 **Backend API:** [https://shopnest-backend-0oqh.onrender.com](https://shopnest-backend-0oqh.onrender.com)  
 **API Documentation:** [https://shopnest-backend-0oqh.onrender.com/docs](https://shopnest-backend-0oqh.onrender.com/docs)
 
@@ -497,7 +497,7 @@ Seller Earning = $200 - $20 = $180
 
 ### Quick Test Flow
 
-1. **Visit:** [https://shopnest-frontend-pi.vercel.app](https://shopnest-frontend-pi.vercel.app)
+1. **Visit:** [https://shopnest-mart.vercel.app](https://shopnest-mart.vercel.app)
 2. **Login:** buyer@demo.com / Buyer123!
 3. **Browse** products and add to cart
 4. **Checkout** with test card: 4242 4242 4242 4242
@@ -608,7 +608,7 @@ Built with amazing tools:
 ## 🔗 Links
 
 ### Live Application
-- **Frontend:** https://shopnest-frontend-pi.vercel.app
+- **Frontend:** https://shopnest-mart.vercel.app
 - **Backend:** https://shopnest-backend-0oqh.onrender.com
 - **API Docs:** https://shopnest-backend-0oqh.onrender.com/docs
 
@@ -668,7 +668,7 @@ Building/studying ShopNest teaches:
 ## 🚀 Get Started
 
 **Try the demo:**  
-👉 [https://shopnest-frontend-pi.vercel.app](https://shopnest-frontend-pi.vercel.app)
+👉 [https://shopnest-mart.vercel.app](https://shopnest-mart.vercel.app)
 
 **Deploy your own:**  
 1. Fork this repository
