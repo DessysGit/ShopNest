@@ -300,7 +300,7 @@ def create_demo_data():
                 # Add product image
                 image = ProductImage(
                     product_id=product.id,
-                    url=product_data["image"],
+                    image_url=product_data["image"],
                     is_primary=True
                 )
                 db.add(image)
