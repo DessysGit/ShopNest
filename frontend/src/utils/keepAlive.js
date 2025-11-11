@@ -5,11 +5,14 @@
  * Render free tier from sleeping due to inactivity.
  * 
  * Works alongside UptimeRobot for redundant keep-alive protection.
+ * 
+ * Console output: Only errors and warnings (production-ready)
  */
 
 const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
 const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const PING_TIMEOUT = 10000; // 10 seconds timeout
+const DEBUG = false; // Set to true to see all logs (for debugging)
 
 let pingInterval = null;
 let consecutiveFailures = 0;
@@ -21,25 +24,27 @@ const MAX_FAILURES = 3;
 export const startKeepAlive = () => {
   // Don't start if already running
   if (pingInterval) {
-    console.log('⚠️ Keep-alive already running');
+    if (DEBUG) console.log('⚠️ Keep-alive already running');
     return;
   }
   
   // Only run in production (not local development)
   if (import.meta.env.DEV) {
-    console.log('⏸️ Keep-alive disabled in development mode');
+    if (DEBUG) console.log('⏸️ Keep-alive disabled in development mode');
     return;
   }
 
   // Don't run if no backend URL
   if (!BACKEND_URL) {
-    console.warn('⚠️ No backend URL configured for keep-alive');
+    console.warn('⚠️ Keep-alive: No backend URL configured');
     return;
   }
 
-  console.log('🏓 Starting keep-alive service...');
-  console.log(`   Backend: ${BACKEND_URL}`);
-  console.log(`   Interval: ${PING_INTERVAL / 1000 / 60} minutes`);
+  if (DEBUG) {
+    console.log('🏓 Keep-alive service started');
+    console.log(`   Backend: ${BACKEND_URL}`);
+    console.log(`   Interval: ${PING_INTERVAL / 1000 / 60} minutes`);
+  }
   
   // Ping immediately on start
   pingBackend();
@@ -58,7 +63,7 @@ export const stopKeepAlive = () => {
     clearInterval(pingInterval);
     pingInterval = null;
     consecutiveFailures = 0;
-    console.log('⏹️ Keep-alive service stopped');
+    if (DEBUG) console.log('⏹️ Keep-alive service stopped');
   }
 };
 
@@ -83,11 +88,13 @@ const pingBackend = async () => {
     clearTimeout(timeoutId);
     
     if (response.ok) {
-      const data = await response.json();
       const duration = Date.now() - startTime;
-      
       consecutiveFailures = 0; // Reset failure counter
-      console.log(`🏓 Keep-alive ping successful (${duration}ms)`, data);
+      
+      if (DEBUG) {
+        const data = await response.json();
+        console.log(`🏓 Keep-alive ping successful (${duration}ms)`, data);
+      }
     } else {
       handlePingFailure('HTTP error', response.status);
     }
@@ -105,11 +112,15 @@ const pingBackend = async () => {
  */
 const handlePingFailure = (type, details) => {
   consecutiveFailures++;
-  console.log(`🏓 Keep-alive ping failed (${type}): ${details}`);
   
+  // Only log after multiple failures (reduce noise)
   if (consecutiveFailures >= MAX_FAILURES) {
-    console.warn(`⚠️ ${MAX_FAILURES} consecutive failures. Backend might be down or sleeping.`);
-    // Don't stop pinging - let it keep trying to wake up the backend
+    console.warn(
+      `⚠️ Keep-alive: ${consecutiveFailures} consecutive failures. ` +
+      `Backend might be down or sleeping. Last error: ${type} - ${details}`
+    );
+  } else if (DEBUG) {
+    console.log(`🏓 Keep-alive ping failed (${type}): ${details}`);
   }
 };
 
@@ -117,7 +128,7 @@ const handlePingFailure = (type, details) => {
  * Manual ping trigger (useful for testing)
  */
 export const manualPing = async () => {
-  console.log('🏓 Manual ping triggered...');
+  console.log('🏓 Manual keep-alive ping triggered...');
   await pingBackend();
 };
 
@@ -129,7 +140,7 @@ if (typeof window !== 'undefined') {
   // Also ping when tab becomes visible (user returns)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && !import.meta.env.DEV) {
-      console.log('👀 Tab visible - sending keep-alive ping');
+      if (DEBUG) console.log('👀 Tab visible - sending keep-alive ping');
       pingBackend();
     }
   });
@@ -137,8 +148,8 @@ if (typeof window !== 'undefined') {
   // Cleanup on page unload
   window.addEventListener('beforeunload', stopKeepAlive);
   
-  // Log status
-  console.log('✅ Keep-alive service initialized');
+  // Only log initialization in debug mode
+  if (DEBUG) console.log('✅ Keep-alive service initialized');
 }
 
 export default {
