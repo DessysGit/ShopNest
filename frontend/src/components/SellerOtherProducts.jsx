@@ -12,9 +12,15 @@ const SellerOtherProducts = ({ sellerId, productId, sellerName, limit = 8 }) => 
       if (!sellerId || !productId) return;
       
       setLoading(true);
-      const data = await recommendationService.getSellerOtherProducts(sellerId, productId, limit);
-      setProducts(data);
-      setLoading(false);
+      try {
+        const data = await recommendationService.getSellerOtherProducts(sellerId, productId, limit);
+        setProducts(data || []);
+      } catch (error) {
+        console.log('Seller products not available yet');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSellerProducts();

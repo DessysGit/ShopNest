@@ -12,9 +12,15 @@ const SimilarProducts = ({ productId, limit = 8 }) => {
       if (!productId) return;
       
       setLoading(true);
-      const data = await recommendationService.getSimilarProducts(productId, limit);
-      setProducts(data);
-      setLoading(false);
+      try {
+        const data = await recommendationService.getSimilarProducts(productId, limit);
+        setProducts(data || []);
+      } catch (error) {
+        console.log('Similar products not available yet');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSimilarProducts();

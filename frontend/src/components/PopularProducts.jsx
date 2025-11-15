@@ -10,9 +10,15 @@ const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
   useEffect(() => {
     const fetchPopularProducts = async () => {
       setLoading(true);
-      const data = await recommendationService.getPopularProducts(limit);
-      setProducts(data);
-      setLoading(false);
+      try {
+        const data = await recommendationService.getPopularProducts(limit);
+        setProducts(data || []);
+      } catch (error) {
+        console.log('Recommendations not available yet');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPopularProducts();
