@@ -147,7 +147,7 @@ const Products = () => {
                           <Eye className="h-5 w-5" />
                         </Link>
                         <button
-                          onClick={() => toast.info('Edit feature coming soon!')}
+                          onClick={() => toast('Edit feature coming soon!', { icon: 'ℹ️' })}
                           className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                           title="Edit Product"
                         >
