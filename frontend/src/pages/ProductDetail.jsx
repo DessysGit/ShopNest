@@ -5,6 +5,10 @@ import productService from '../services/productService';
 import reviewService from '../services/reviewService';
 import useCartStore from '../store/cartStore';
 import toast from 'react-hot-toast';
+import SimilarProducts from '../components/SimilarProducts';
+import SellerOtherProducts from '../components/SellerOtherProducts';
+import RecentlyViewed from '../components/RecentlyViewed';
+import recommendationService from '../services/recommendationService';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -27,6 +31,14 @@ const ProductDetail = () => {
     try {
       const data = await productService.getProduct(id);
       setProduct(data);
+      
+      // Track this product as recently viewed
+      recommendationService.addToRecentlyViewed({
+        id: data.id,
+        name: data.name,
+        price: data.price,
+        images: data.images
+      });
     } catch (error) {
       toast.error('Product not found');
     } finally {
@@ -347,6 +359,20 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Recommendation Sections */}
+        {product && <SimilarProducts productId={product.id} limit={8} />}
+        
+        {product && product.seller && (
+          <SellerOtherProducts 
+            sellerId={product.seller.id}
+            productId={product.id}
+            sellerName={product.seller.business_name}
+            limit={8}
+          />
+        )}
+        
+        <RecentlyViewed currentProductId={product?.id} limit={8} />
       </div>
     </div>
   );

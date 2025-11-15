@@ -3,6 +3,7 @@ import { ArrowRight, ShoppingBag, Users, Shield, TrendingUp, Search } from 'luci
 import { useEffect, useState } from 'react';
 import productService from '../services/productService';
 import useAuthStore from '../store/authStore';
+import PopularProducts from '../components/PopularProducts';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -100,7 +101,10 @@ const Home = () => {
 
         {/* Products Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-between items-center mb-6">
+          {/* Popular Products Recommendations */}
+          <PopularProducts limit={12} title="Recommended For You" />
+
+          <div className="flex justify-between items-center mb-6 mt-12">
             <h2 className="text-2xl font-bold text-gray-900">Latest Products</h2>
             <Link 
               to="/products" 
