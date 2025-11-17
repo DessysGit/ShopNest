@@ -3,9 +3,9 @@ Recommendation Service for ShopNest
 Provides product recommendations based on various algorithms
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, desc
-from app.models.product import Product
+from app.models.product import Product, ProductImage
 from app.models.order import Order, OrderItem
 from typing import List, Optional
 import random
@@ -38,6 +38,7 @@ class RecommendationService:
         
         # Find similar products
         similar = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.id != product_id,
@@ -62,6 +63,7 @@ class RecommendationService:
         Get popular products based on sales and ratings
         """
         popular = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.is_active == True,
@@ -86,6 +88,7 @@ class RecommendationService:
         # In future, calculate based on recent views/sales
         # For now, use is_featured flag and recent products
         trending = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.is_active == True,
@@ -111,6 +114,7 @@ class RecommendationService:
         Get other products from the same seller
         """
         other_products = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.id != product_id,
@@ -171,6 +175,7 @@ class RecommendationService:
             return []
         
         products = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.id.in_(product_ids),
@@ -204,6 +209,7 @@ class RecommendationService:
         Get popular products in a specific category
         """
         query = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.category_id == category_id,
@@ -249,6 +255,7 @@ class RecommendationService:
             offset = 0
         
         products = self.db.query(Product)\
+            .options(joinedload(Product.images))\
             .filter(
                 and_(
                     Product.is_active == True,

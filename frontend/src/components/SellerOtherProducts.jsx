@@ -62,9 +62,12 @@ const SellerOtherProducts = ({ sellerId, productId, sellerName, limit = 8 }) => 
             {/* Product Image */}
             <div className="relative h-48 bg-gray-100 overflow-hidden">
               <img
-                src={product.images?.[0]?.image_url || '/placeholder-product.png'}
+                src={product.primary_image || product.images?.[0]?.image_url || 'https://via.placeholder.com/400x400?text=No+Image'}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
+                }}
               />
             </div>
 
