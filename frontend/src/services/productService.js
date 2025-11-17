@@ -19,7 +19,7 @@ export const productService = {
     return response.data;
   },
 
-  // Update product (seller)
+  // Update product (seller) - includes images in the main payload
   updateProduct: async (id, productData) => {
     const response = await api.put(`/products/${id}`, productData);
     return response.data;

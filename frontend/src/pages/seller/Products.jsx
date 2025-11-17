@@ -146,13 +146,13 @@ const Products = () => {
                         >
                           <Eye className="h-5 w-5" />
                         </Link>
-                        <button
-                          onClick={() => toast('Edit feature coming soon!', { icon: 'ℹ️' })}
+                        <Link
+                          to={`/seller/products/edit/${product.id}`}
                           className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                           title="Edit Product"
                         >
                           <Edit className="h-5 w-5" />
-                        </button>
+                        </Link>
                         <button
                           onClick={() => handleDelete(product.id, product.name)}
                           className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg"

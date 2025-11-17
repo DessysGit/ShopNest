@@ -20,6 +20,7 @@ import TrackOrder from './pages/TrackOrder';
 import SellerDashboard from './pages/seller/Dashboard';
 import SellerProducts from './pages/seller/Products';
 import CreateProduct from './pages/seller/CreateProduct';
+import EditProduct from './pages/seller/EditProduct';
 import SellerOrders from './pages/seller/Orders';
 
 // Admin Pages
@@ -109,6 +110,14 @@ function App() {
               element={
                 <ProtectedRoute role="seller">
                   <CreateProduct />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller/products/edit/:id"
+              element={
+                <ProtectedRoute role="seller">
+                  <EditProduct />
                 </ProtectedRoute>
               }
             />

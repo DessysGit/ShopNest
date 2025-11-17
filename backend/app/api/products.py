@@ -309,6 +309,9 @@ async def update_product(
                 detail="Category not found"
             )
     
+    # Handle images separately if provided
+    images_data = update_data.pop('images', None)
+    
     for field, value in update_data.items():
         if field != "name":
             setattr(product, field, value)
@@ -316,6 +319,25 @@ async def update_product(
             product.name = value
     
     db.commit()
+    
+    # Update images if provided
+    if images_data is not None:
+        # Delete existing images
+        db.query(ProductImage).filter(ProductImage.product_id == product_id).delete()
+        
+        # Add new images
+        for img_data in images_data:
+            product_image = ProductImage(
+                product_id=product_id,
+                image_url=img_data['image_url'],
+                alt_text=img_data.get('alt_text'),
+                position=img_data.get('position', 0),
+                is_primary=img_data.get('is_primary', False)
+            )
+            db.add(product_image)
+        
+        db.commit()
+    
     db.refresh(product)
     
     # Get images

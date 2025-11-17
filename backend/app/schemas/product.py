@@ -59,6 +59,7 @@ class ProductUpdate(BaseModel):
     digital_file_url: Optional[str] = None
     is_active: Optional[bool] = None
     is_featured: Optional[bool] = None
+    images: Optional[List[ProductImageCreate]] = None
 
 
 class ProductResponse(BaseModel):
