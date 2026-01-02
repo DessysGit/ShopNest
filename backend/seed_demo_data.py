@@ -146,15 +146,19 @@ SAMPLE_PRODUCTS = [
 ]
 
 
-def create_demo_data():
+def create_demo_data(verbose=True):
     """Create all demo data"""
     db = SessionLocal()
     
+    def log(message):
+        if verbose:
+            print(message)
+
     try:
-        print("🌱 Starting demo data seeding...")
+        log("🌱 Starting demo data seeding...")
         
         # 1. Create Categories
-        print("\n📁 Creating categories...")
+        log("\n📁 Creating categories...")
         categories = {}
         for cat_name in ["Electronics", "Furniture", "Clothing", "Home & Kitchen", "Sports & Outdoors"]:
             category = db.query(Category).filter(Category.name == cat_name).first()
@@ -168,12 +172,12 @@ def create_demo_data():
                 db.add(category)
                 db.flush()
             categories[cat_name] = category
-            print(f"  ✅ {cat_name}")
+            log(f"  ✅ {cat_name}")
         
         db.commit()
         
         # 2. Create Admin User
-        print("\n👑 Creating admin user...")
+        log("\n👑 Creating admin user...")
         admin = db.query(User).filter(User.email == "admin@demo.com").first()
         if not admin:
             admin = User(
@@ -186,12 +190,12 @@ def create_demo_data():
             )
             db.add(admin)
             db.commit()
-            print("  ✅ admin@demo.com / Admin123!")
+            log("  ✅ admin@demo.com / Admin123!")
         else:
             print("  ℹ️  Admin already exists")
         
         # 3. Create Buyer User
-        print("\n🛒 Creating buyer user...")
+        log("\n🛒 Creating buyer user...")
         buyer = db.query(User).filter(User.email == "buyer@demo.com").first()
         if not buyer:
             buyer = User(
@@ -205,12 +209,12 @@ def create_demo_data():
             )
             db.add(buyer)
             db.commit()
-            print("  ✅ buyer@demo.com / Buyer123!")
+            log("  ✅ buyer@demo.com / Buyer123!")
         else:
-            print("  ℹ️  Buyer already exists")
+            log("  ℹ️  Buyer already exists")
         
         # 4. Create Seller Users
-        print("\n💼 Creating seller users...")
+        log("\n💼 Creating seller users...")
         sellers_data = [
             {
                 "email": "seller1@demo.com",
@@ -258,19 +262,19 @@ def create_demo_data():
                 db.add(seller_profile)
                 db.flush()
                 sellers.append(seller_profile)
-                print(f"  ✅ {seller_data['email']} / {seller_data['password']}")
+                log(f"  ✅ {seller_data['email']} / {seller_data['password']}")
             else:
                 seller_profile = db.query(SellerProfile).filter(
                     SellerProfile.user_id == seller_user.id
                 ).first()
                 if seller_profile:
                     sellers.append(seller_profile)
-                print(f"  ℹ️  {seller_data['email']} already exists")
+                log(f"  ℹ️  {seller_data['email']} already exists")
         
         db.commit()
         
         # 5. Create Products
-        print("\n📦 Creating products...")
+        log("\n📦 Creating products...")
         products_created = 0
         for i, product_data in enumerate(SAMPLE_PRODUCTS):
             # Assign products alternately to sellers
@@ -305,13 +309,13 @@ def create_demo_data():
                 )
                 db.add(image)
                 products_created += 1
-                print(f"  ✅ {product_data['name']}")
+                log(f"  ✅ {product_data['name']}")
         
         db.commit()
-        print(f"\n  📦 Total products created: {products_created}")
+        log(f"\n  📦 Total products created: {products_created}")
         
         # 6. Create Sample Orders
-        print("\n🛍️  Creating sample orders...")
+        log("\n🛍️  Creating sample orders...")
         orders_created = 0
         
         # Get some products for orders
@@ -384,32 +388,32 @@ def create_demo_data():
                     db.add(order_item)
                 
                 orders_created += 1
-                print(f"  ✅ Order {order_number}")
+                log(f"  ✅ Order {order_number}")
         
         db.commit()
-        print(f"\n  🛍️  Total orders created: {orders_created}")
+        log(f"\n  🛍️  Total orders created: {orders_created}")
         
         # Summary
-        print("\n" + "="*60)
-        print("✨ Demo data seeding completed successfully!")
-        print("="*60)
-        print("\n📊 Summary:")
-        print(f"  • Categories: {len(categories)}")
-        print(f"  • Users: 1 admin, 1 buyer, {len(sellers)} sellers")
-        print(f"  • Products: {products_created}")
-        print(f"  • Orders: {orders_created}")
+        log("\n" + "="*60)
+        log("✨ Demo data seeding completed successfully!")
+        log("="*60)
+        log("\n📊 Summary:")
+        log(f"  • Categories: {len(categories)}")
+        log(f"  • Users: 1 admin, 1 buyer, {len(sellers)} sellers")
+        log(f"  • Products: {products_created}")
+        log(f"  • Orders: {orders_created}")
         
-        print("\n🔐 Demo Credentials:")
-        print("  Admin:  admin@demo.com / Admin123!")
-        print("  Seller: seller1@demo.com / Seller123!")
-        print("  Seller: seller2@demo.com / Seller123!")
-        print("  Buyer:  buyer@demo.com / Buyer123!")
+        log("\n🔐 Demo Credentials:")
+        log("  Admin:  admin@demo.com / Admin123!")
+        log("  Seller: seller1@demo.com / Seller123!")
+        log("  Seller: seller2@demo.com / Seller123!")
+        log("  Buyer:  buyer@demo.com / Buyer123!")
         
-        print("\n✅ Your database is ready for demo!")
-        print("="*60)
+        log("\n✅ Your database is ready for demo!")
+        log("="*60)
         
     except Exception as e:
-        print(f"\n❌ Error seeding data: {str(e)}")
+        print(f"\n❌ Error seeding data: {str(e)}") # Always show errors
         db.rollback()
         raise
     finally:
@@ -417,6 +421,11 @@ def create_demo_data():
 
 
 if __name__ == "__main__":
-    print("🚀 ShopNest Demo Data Seeder")
-    print("="*60)
-    create_demo_data()
+    import sys
+    quiet = "--quiet" in sys.argv
+    
+    if not quiet:
+        print("🚀 ShopNest Demo Data Seeder")
+        print("="*60)
+    
+    create_demo_data(verbose=not quiet)
