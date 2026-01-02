@@ -13,7 +13,7 @@ const DemoBanner = () => {
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 text-center">
             <p className="text-sm md:text-base">
-              <span className="font-bold">🎓 Portfolio Demo</span>
+              <span className="font-bold">🎓 Demo</span>
               {' '}-{' '}
               <span className="hidden sm:inline">
                 This is a demonstration project using Stripe test mode.
