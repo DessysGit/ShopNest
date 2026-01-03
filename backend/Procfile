@@ -1,1 +1,1 @@
-web: alembic upgrade head > /dev/null 2>&1 && python seed_demo_data.py > /dev/null 2>&1 && uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level error
+web: alembic upgrade head && python seed_demo_data.py --quiet && uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level error
