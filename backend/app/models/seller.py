@@ -38,6 +38,7 @@ class SellerProfile(Base):
 
     # Relationships
     user = relationship("User", back_populates="seller_profile", foreign_keys=[user_id])
+    products = relationship("Product", back_populates="seller", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<SellerProfile {self.business_name}>"
