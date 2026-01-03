@@ -34,6 +34,11 @@ class Product(Base):
     total_reviews = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    seller = relationship("SellerProfile", back_populates="products")
+    category = relationship("Category", back_populates="products")
 
     def __repr__(self):
         return f"<Product {self.name}>"
@@ -49,6 +54,9 @@ class ProductImage(Base):
     position = Column(Integer, default=0)
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    product = relationship("Product", back_populates="images")
 
     def __repr__(self):
         return f"<ProductImage {self.image_url}>"
