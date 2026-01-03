@@ -280,36 +280,41 @@ def create_demo_data(verbose=True):
             # Assign products alternately to sellers
             seller = sellers[i % len(sellers)]
             
-            # Check if product already exists
-            existing = db.query(Product).filter(
-                Product.name == product_data["name"],
-                Product.seller_id == seller.id
-            ).first()
+            # Generate unique slug by including seller index if needed
+            base_slug = product_data["name"].lower().replace(" ", "-")
+            slug = base_slug
             
-            if not existing:
-                product = Product(
-                    seller_id=seller.id,
-                    category_id=categories[product_data["category"]].id,
-                    name=product_data["name"],
-                    slug=product_data["name"].lower().replace(" ", "-"),
-                    description=product_data["description"],
-                    price=product_data["price"],
-                    quantity=product_data["quantity"],
-                    sku=f"DEMO-{i+1:03d}",
-                    is_active=True
-                )
-                db.add(product)
-                db.flush()
-                
-                # Add product image
-                image = ProductImage(
-                    product_id=product.id,
-                    image_url=product_data["image"],
-                    is_primary=True
-                )
-                db.add(image)
-                products_created += 1
-                log(f"  ✅ {product_data['name']}")
+            # Check if product with this slug already exists
+            existing_by_slug = db.query(Product).filter(Product.slug == slug).first()
+            if existing_by_slug:
+                # If slug exists, skip this product (already seeded)
+                log(f"  ℹ️  {product_data['name']} (already exists)")
+                continue
+            
+            # Create new product
+            product = Product(
+                seller_id=seller.id,
+                category_id=categories[product_data["category"]].id,
+                name=product_data["name"],
+                slug=slug,
+                description=product_data["description"],
+                price=product_data["price"],
+                quantity=product_data["quantity"],
+                sku=f"DEMO-{i+1:03d}",
+                is_active=True
+            )
+            db.add(product)
+            db.flush()
+            
+            # Add product image
+            image = ProductImage(
+                product_id=product.id,
+                image_url=product_data["image"],
+                is_primary=True
+            )
+            db.add(image)
+            products_created += 1
+            log(f"  ✅ {product_data['name']}")
         
         db.commit()
         log(f"\n  📦 Total products created: {products_created}")
