@@ -192,7 +192,7 @@ def create_demo_data(verbose=True):
             db.commit()
             log("  ✅ admin@demo.com / Admin123!")
         else:
-            print("  ℹ️  Admin already exists")
+            log("  ℹ️  Admin already exists")
         
         # 3. Create Buyer User
         log("\n🛒 Creating buyer user...")
