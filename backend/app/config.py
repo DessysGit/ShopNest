@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     # Frontend URL (for email links)
     FRONTEND_URL: str = "http://localhost:5173"
     
+    # Logging
+    LOG_LEVEL: str = "INFO"  # Can be: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_SQL_QUERIES: bool = False  # Set to True to see all SQL queries
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
