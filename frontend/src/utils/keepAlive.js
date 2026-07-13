@@ -10,7 +10,7 @@
  */
 
 const BACKEND_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const PING_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds (reduced frequency)
 const PING_TIMEOUT = 10000; // 10 seconds timeout
 const DEBUG = false; // Set to true to see all logs (for debugging)
 
@@ -49,7 +49,7 @@ export const startKeepAlive = () => {
   // Ping immediately on start
   pingBackend();
   
-  // Then ping every 5 minutes
+  // Then ping every 10 minutes (reduced from 5 min to minimize server load)
   pingInterval = setInterval(() => {
     pingBackend();
   }, PING_INTERVAL);
@@ -136,14 +136,6 @@ export const manualPing = async () => {
 if (typeof window !== 'undefined') {
   // Start immediately
   startKeepAlive();
-  
-  // Also ping when tab becomes visible (user returns)
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !import.meta.env.DEV) {
-      if (DEBUG) console.log('👀 Tab visible - sending keep-alive ping');
-      pingBackend();
-    }
-  });
   
   // Cleanup on page unload
   window.addEventListener('beforeunload', stopKeepAlive);

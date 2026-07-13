@@ -21,6 +21,6 @@ REM Start the server
 echo Starting Uvicorn server on http://localhost:8000
 echo Press CTRL+C to stop the server
 echo.
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000 --log-level warning
 
 pause

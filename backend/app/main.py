@@ -1,7 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 from app.config import settings
 from app.api import auth, sellers, admin, categories, products, orders, payments, reviews, platform_settings, recommendations, wishlist
+
+# Configure uvicorn access logger to filter out /health requests
+class HealthCheckLogFilter(logging.Filter):
+    """Filter to suppress access logs for /health endpoint"""
+    def filter(self, record):
+        if hasattr(record, 'args') and len(record.args) >= 3:
+            # Check if the request path is /health
+            request_line = record.args[0] if isinstance(record.args[0], str) else ''
+            if '/health' in request_line:
+                return False
+        return True
+
+# Apply the filter to uvicorn access logger
+logging.getLogger('uvicorn.access').addFilter(HealthCheckLogFilter())
 
 # Create FastAPI app
 app = FastAPI(
