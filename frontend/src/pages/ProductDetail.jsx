@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingCart, Star, Package, Truck, Shield, ArrowLeft, Plus, Minus, ThumbsUp, User } from 'lucide-react';
+import { ShoppingCart, Star, Package, Truck, Shield, ArrowLeft, Plus, Minus, ThumbsUp, User, Heart } from 'lucide-react';
 import productService from '../services/productService';
 import reviewService from '../services/reviewService';
+import wishlistService from '../services/wishlistService';
 import useCartStore from '../store/cartStore';
+import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import SimilarProducts from '../components/SimilarProducts';
 import SellerOtherProducts from '../components/SellerOtherProducts';
+import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import RecentlyViewed from '../components/RecentlyViewed';
 import recommendationService from '../services/recommendationService';
 
@@ -19,12 +22,15 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     fetchProduct();
     fetchReviews();
     fetchReviewStats();
+    checkWishlist();
   }, [id]);
 
   const fetchProduct = async () => {
@@ -64,6 +70,38 @@ const ProductDetail = () => {
       setReviewStats(data);
     } catch (error) {
       console.error('Failed to load review stats:', error);
+    }
+  };
+
+  const checkWishlist = async () => {
+    if (isAuthenticated && product) {
+      try {
+        const inList = await wishlistService.checkWishlist(id);
+        setInWishlist(inList);
+      } catch (error) {
+        setInWishlist(false);
+      }
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to use wishlist');
+      return;
+    }
+    
+    try {
+      if (inWishlist) {
+        await wishlistService.removeFromWishlist(id);
+        setInWishlist(false);
+        toast.success('Removed from wishlist');
+      } else {
+        await wishlistService.addToWishlist(id);
+        setInWishlist(true);
+        toast.success('Added to wishlist!');
+      }
+    } catch (error) {
+      toast.error('Failed to update wishlist');
     }
   };
 
@@ -192,7 +230,7 @@ const ProductDetail = () => {
             )}
 
             {product.quantity > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
                   <div className="flex items-center border border-gray-300 rounded-lg w-32">
@@ -205,10 +243,27 @@ const ProductDetail = () => {
                     </button>
                   </div>
                 </div>
-                <button onClick={handleAddToCart} className="w-full btn-primary flex items-center justify-center text-lg py-4">
-                  <ShoppingCart className="h-6 w-6 mr-2" />
-                  Add to Cart
-                </button>
+                
+                <div className="flex gap-3">
+                  <button onClick={handleAddToCart} className="flex-1 btn-primary flex items-center justify-center text-lg py-4">
+                    <ShoppingCart className="h-6 w-6 mr-2" />
+                    Add to Cart
+                  </button>
+                  
+                  {isAuthenticated && (
+                    <button
+                      onClick={handleWishlistToggle}
+                      className={`p-4 rounded-lg transition-all ${
+                        inWishlist
+                          ? 'bg-red-500 text-white hover:bg-red-600'
+                          : 'bg-gray-200 text-gray-700 hover:bg-red-500 hover:text-white'
+                      }`}
+                      title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                    >
+                      <Heart className="h-6 w-6" fill={inWishlist ? 'currentColor' : 'none'} />
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -360,7 +415,9 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Recommendation Sections */}
+        {/* Recommendation Sections - Frequently Bought Together shown first */}
+        {product && <FrequentlyBoughtTogether productId={product.id} limit={4} />}
+        
         {product && <SimilarProducts productId={product.id} limit={8} />}
         
         {product && product.seller && (

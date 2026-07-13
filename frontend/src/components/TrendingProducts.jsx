@@ -6,27 +6,27 @@ import wishlistService from '../services/wishlistService';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
-const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
+const TrendingProducts = ({ limit = 8, title = "Trending Products" }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    const fetchPopularProducts = async () => {
+    const fetchTrendingProducts = async () => {
       setLoading(true);
       try {
-        const data = await recommendationService.getPopularProducts(limit);
+        const data = await recommendationService.getTrendingProducts(limit);
         setProducts(data || []);
       } catch (error) {
-        console.log('Recommendations not available yet');
+        console.log('Trending products not available yet');
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPopularProducts();
+    fetchTrendingProducts();
   }, [limit]);
 
   // Fetch wishlist to highlight saved items
@@ -45,8 +45,8 @@ const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
   }, [isAuthenticated]);
 
   const handleWishlistToggle = async (e, product) => {
-    e.preventDefault(); // Prevent link navigation
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
     
     try {
       if (wishlistProductIds.has(product.id)) {
@@ -63,12 +63,7 @@ const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
         toast.success('Added to wishlist!');
       }
     } catch (error) {
-      if (error.response?.status === 400 && error.response?.data?.detail?.includes('already')) {
-        // Product already in wishlist - just inform user
-        toast('Already in wishlist', { icon: '❤️' });
-      } else {
-        toast.error('Login to save items');
-      }
+      toast.error('Login to save items');
     }
   };
 
@@ -131,13 +126,11 @@ const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
                 }}
               />
               
-              {/* Best Seller Badge */}
-              {product.sales_count > 10 && (
-                <div className="absolute bottom-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  Best Seller
-                </div>
-              )}
+              {/* Trending Badge */}
+              <div className="absolute bottom-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                Trending
+              </div>
             </div>
 
             {/* Product Info */}
@@ -182,4 +175,4 @@ const PopularProducts = ({ limit = 8, title = "Popular Products" }) => {
   );
 };
 
-export default PopularProducts;
+export default TrendingProducts;

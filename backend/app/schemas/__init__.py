@@ -10,6 +10,11 @@ from .product import (
     ProductImageCreate,
     ProductImageResponse
 )
+from .wishlist import (
+    WishlistItemCreate,
+    WishlistItemResponse,
+    WishlistItemWithProduct
+)
 
 __all__ = [
     "UserCreate", 
@@ -31,5 +36,8 @@ __all__ = [
     "ProductListResponse",
     "ProductSearchParams",
     "ProductImageCreate",
-    "ProductImageResponse"
+    "ProductImageResponse",
+    "WishlistItemCreate",
+    "WishlistItemResponse",
+    "WishlistItemWithProduct"
 ]

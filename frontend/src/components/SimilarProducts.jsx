@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Sparkles } from 'lucide-react';
+import { Star, Sparkles, Heart } from 'lucide-react';
 import recommendationService from '../services/recommendationService';
+import wishlistService from '../services/wishlistService';
+import useAuthStore from '../store/authStore';
+import toast from 'react-hot-toast';
 
 const SimilarProducts = ({ productId, limit = 8 }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const fetchSimilarProducts = async () => {
@@ -25,6 +30,44 @@ const SimilarProducts = ({ productId, limit = 8 }) => {
 
     fetchSimilarProducts();
   }, [productId, limit]);
+
+  // Fetch wishlist to highlight saved items
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchWishlist = async () => {
+        try {
+          const data = await wishlistService.getWishlist();
+          setWishlistProductIds(new Set(data.map(item => item.product?.id)));
+        } catch (error) {
+          // Silently fail
+        }
+      };
+      fetchWishlist();
+    }
+  }, [isAuthenticated]);
+
+  const handleWishlistToggle = async (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      if (wishlistProductIds.has(product.id)) {
+        await wishlistService.removeFromWishlist(product.id);
+        setWishlistProductIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(product.id);
+          return newSet;
+        });
+        toast.success('Removed from wishlist');
+      } else {
+        await wishlistService.addToWishlist(product.id);
+        setWishlistProductIds(prev => new Set(prev).add(product.id));
+        toast.success('Added to wishlist!');
+      }
+    } catch (error) {
+      toast.error('Login to save items');
+    }
+  };
 
   if (loading) {
     return (
@@ -57,8 +100,23 @@ const SimilarProducts = ({ productId, limit = 8 }) => {
           <Link
             key={product.id}
             to={`/products/${product.id}`}
-            className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+            className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden relative"
           >
+            {/* Wishlist Button */}
+            {isAuthenticated && (
+              <button
+                onClick={(e) => handleWishlistToggle(e, product)}
+                className={`absolute top-2 right-2 z-10 p-2 rounded-full transition-all ${
+                  wishlistProductIds.has(product.id)
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/80 text-gray-600 hover:bg-red-500 hover:text-white'
+                }`}
+                title={wishlistProductIds.has(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <Heart className="w-4 h-4" />
+              </button>
+            )}
+
             {/* Product Image */}
             <div className="relative h-48 bg-gray-100 overflow-hidden">
               <img

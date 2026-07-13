@@ -1,12 +1,31 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Store, LayoutDashboard, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Store, LayoutDashboard, ShoppingBag, Heart } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import useCartStore from '../store/cartStore';
+import { useEffect, useState } from 'react';
+import wishlistService from '../services/wishlistService';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const itemCount = useCartStore((state) => state.getItemCount());
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Fetch wishlist count for authenticated buyers
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'buyer') {
+      fetchWishlistCount();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchWishlistCount = async () => {
+    try {
+      const data = await wishlistService.getWishlist();
+      setWishlistCount(data.length);
+    } catch (error) {
+      // Silently fail - not critical
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -34,6 +53,12 @@ const Navbar = () => {
                 My Orders
               </Link>
             )}
+            {isAuthenticated && user?.role === 'buyer' && (
+              <Link to="/wishlist" className="text-gray-700 hover:text-primary-600 font-medium flex items-center">
+                <Heart className="h-4 w-4 mr-1" />
+                Wishlist
+              </Link>
+            )}
             {isAuthenticated && user?.role === 'seller' && (
               <Link to="/seller/dashboard" className="text-gray-700 hover:text-primary-600 font-medium">
                 Seller Dashboard
@@ -48,6 +73,18 @@ const Navbar = () => {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {/* Wishlist */}
+            {isAuthenticated && user?.role === 'buyer' && (
+              <Link to="/wishlist" className="relative p-2 text-gray-700 hover:text-primary-600">
+                <Heart className="h-6 w-6" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             {/* Cart */}
             <Link to="/cart" className="relative p-2 text-gray-700 hover:text-primary-600">
               <ShoppingCart className="h-6 w-6" />

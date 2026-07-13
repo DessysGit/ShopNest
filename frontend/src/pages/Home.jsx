@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import productService from '../services/productService';
 import useAuthStore from '../store/authStore';
 import PopularProducts from '../components/PopularProducts';
+import TrendingProducts from '../components/TrendingProducts';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -101,6 +102,9 @@ const Home = () => {
 
         {/* Products Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Trending Products - shown first */}
+          <TrendingProducts limit={8} title="Trending Now" />
+
           {/* Popular Products Recommendations */}
           <PopularProducts limit={12} title="Recommended For You" />
 

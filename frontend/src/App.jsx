@@ -15,6 +15,7 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import ReviewProduct from './pages/ReviewProduct';
 import TrackOrder from './pages/TrackOrder';
+import Wishlist from './pages/Wishlist';
 
 // Seller Pages
 import SellerDashboard from './pages/seller/Dashboard';
@@ -53,6 +54,17 @@ function App() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/track-order" element={<TrackOrder />} />
+            
+            {/* Wishlist - Buyer only */}
+            <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute>
+                  <Wishlist />
+                </ProtectedRoute>
+              }
+            />
+            
             <Route
               path="/checkout"
               element={
