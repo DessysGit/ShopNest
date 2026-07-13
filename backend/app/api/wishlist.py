@@ -24,7 +24,7 @@ from uuid import UUID
 from app.database import get_db
 from app.models.user import User
 from app.models.wishlist import WishlistItem
-from app.models.product import Product
+from app.models.product import Product, ProductImage
 from app.middleware.auth_middleware import get_current_user
 from app.schemas.wishlist import WishlistItemCreate, WishlistItemResponse, WishlistItemWithProduct
 
@@ -69,20 +69,32 @@ async def get_wishlist(
     for item in wishlist_items:
         product = db.query(Product).filter(Product.id == item.product_id).first()
         if product:
-            # Convert wishlist item to response model and add product details
-            item_dict = WishlistItemWithProduct.model_validate(item).model_dump()
-            item_dict["product"] = {
-                "id": product.id,
+            # Query images separately to avoid lazy loading issues
+            images = db.query(ProductImage).filter(
+                ProductImage.product_id == product.id
+            ).order_by(ProductImage.position).all()
+            
+            # Build product data with explicit image handling
+            product_data = {
+                "id": str(product.id),
                 "name": product.name,
                 "price": float(product.price),
                 "quantity": product.quantity,
-                "images": [img.image_url for img in product.images] if product.images else [],
-                "primary_image": product.images[0].image_url if product.images else None,
-                "rating_average": float(product.rating_average) if product.rating_average else 0,
-                "total_reviews": product.total_reviews,
+                "images": [img.image_url for img in images] if images else [],
+                "primary_image": images[0].image_url if images else None,
+                "rating_average": float(product.rating_average) if product.rating_average else 0.0,
+                "total_reviews": product.total_reviews if product.total_reviews else 0,
                 "is_active": product.is_active
             }
-            result.append(WishlistItemWithProduct(**item_dict))
+            
+            # Build the response directly
+            result.append(WishlistItemWithProduct(
+                id=item.id,
+                user_id=item.user_id,
+                product_id=item.product_id,
+                created_at=item.created_at,
+                product=product_data
+            ))
     
     return result
 

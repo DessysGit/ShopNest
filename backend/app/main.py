@@ -26,12 +26,9 @@ app = FastAPI(
 )
 
 # Configure CORS - Include production frontend URL
-allowed_origins = settings.CORS_ORIGINS.copy()
+allowed_origins = settings.cors_origins_list.copy()
 if settings.FRONTEND_URL and settings.FRONTEND_URL not in allowed_origins:
     allowed_origins.append(settings.FRONTEND_URL)
-
-# Remove empty strings
-allowed_origins = [origin for origin in allowed_origins if origin]
 
 app.add_middleware(
     CORSMiddleware,
